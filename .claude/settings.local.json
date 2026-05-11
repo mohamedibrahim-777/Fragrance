@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --yes create-next-app@14.2.15 . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(mkdir -p /c/Fragrance/_scaffold)",
+      "Bash(npx --yes create-next-app@14.2.15 shri-fragrance --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(shopt -s dotglob)",
+      "Bash(mv _scaffold/shri-fragrance/* .)",
+      "Bash(shopt -u dotglob)",
+      "Bash(rmdir _scaffold/shri-fragrance _scaffold)",
+      "Bash(mv .docs_tmp docs)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(npx prisma *)",
+      "Bash(curl -s -o /dev/null -w \"Home: HTTP %{http_code} \\(%{size_download} bytes\\)\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"Products: HTTP %{http_code} \\(%{size_download} bytes\\)\\\\n\" http://localhost:3000/products)",
+      "Bash(curl -s -o /dev/null -w \"Agarbatti collection: HTTP %{http_code} \\(%{size_download} bytes\\)\\\\n\" http://localhost:3000/collections/agarbatti)",
+      "Bash(curl -s -o /dev/null -w \"Product detail: HTTP %{http_code} \\(%{size_download} bytes\\)\\\\n\" http://localhost:3000/products/sandalwood-classic-100g)",
+      "Bash(curl -s -o /dev/null -w \"Login: HTTP %{http_code} \\(%{size_download} bytes\\)\\\\n\" http://localhost:3000/login)",
+      "Bash(curl -s -c /tmp/shri.cookies -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"customer@shri.local\",\"password\":\"customer123\"}')",
+      "Bash(curl -s -b /tmp/shri.cookies http://localhost:3000/api/auth/me)",
+      "Bash(curl -s http://localhost:3000/products/sandalwood-classic-100g)",
+      "Bash(grep -oE 'productId.{4,40}')",
+      "Bash(npx tsx *)",
+      "Bash(curl -s -b /tmp/shri.cookies -X POST http://localhost:3000/api/orders -H 'Content-Type: application/json' -d '{\"items\":[{\"productId\":\"__TRACKED_VAR__\",\"quantity\":2}],\"shippingAddress\":{\"name\":\"Demo Customer\",\"line1\":\"15 Temple St\",\"city\":\"Madurai\",\"state\":\"Tamil Nadu\",\"pincode\":\"625001\",\"phone\":\"9000000000\"}}')",
+      "Bash(curl *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(p['imageinfo'][0]['thumburl']\\) for p in d['query']['pages'].values\\(\\) if p.get\\('imageinfo'\\)]\")",
+      "Bash(python *)",
+      "Read(//tmp/**)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(npx prisma generate 2>&1 | Select-Object -Last 5)",
+      "Bash(taskkill //F //IM node.exe)",
+      "PowerShell(Test-NetConnection *)",
+      "Bash(git check-ignore *)",
+      "Bash(git add *)"
+    ]
+  }
+}
