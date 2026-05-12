@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { Inter, Cormorant_Garamond, Catamaran } from "next/font/google";
+import { Manrope, Noto_Serif, Catamaran } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { StitchFooter } from "@/components/StitchFooter";
 import { AuthSync } from "@/components/AuthSync";
 import "./globals.css";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "600"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
-const cormorant = Cormorant_Garamond({
+const notoSerif = Noto_Serif({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-cormorant",
+  weight: ["500", "600", "700"],
+  variable: "--font-noto-serif",
   display: "swap",
 });
 
@@ -26,9 +28,9 @@ const catamaran = Catamaran({
 });
 
 export const metadata: Metadata = {
-  title: "Shri Fragrance — Pooja essentials, delivered fresh",
+  title: "Shri Fragrance — Divine Temple Agarbatti Experience",
   description:
-    "South Indian devotional fragrance: agarbatti, sambrani, vilakku, karpooram, pooja oils.",
+    "Handcrafted incense inspired by the hallowed atmosphere of Dravidian architecture and morning pujas.",
 };
 
 export default function RootLayout({
@@ -39,12 +41,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${cormorant.variable} ${catamaran.variable}`}
+      className={`dark ${manrope.variable} ${notoSerif.variable} ${catamaran.variable}`}
     >
-      <body className="flex min-h-screen flex-col bg-background text-ink">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
+      </head>
+      <body className="bg-background text-on-background font-body-md texture-bg min-h-screen flex flex-col">
         <AuthSync />
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-grow">{children}</main>
+        <StitchFooter />
         <Footer />
       </body>
     </html>

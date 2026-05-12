@@ -2,29 +2,53 @@ import Link from "next/link";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
-      {/* Sacred blessing strip */}
-      <div
-        className="text-center"
-        style={{
-          background:
-            "linear-gradient(90deg, #4A2E1B 0%, #6F4E37 50%, #4A2E1B 100%)",
-        }}
-      >
-        <p className="font-tamil py-1 text-[11px] tracking-[0.25em] text-brand-soft">
-          🪔 &nbsp; ஶ்ரீ &nbsp;·&nbsp; வாழ்க வளமுடன் &nbsp;·&nbsp; LIVE IN PROSPERITY &nbsp;·&nbsp; ஓம் சாந்தி &nbsp; 🪔
-        </p>
-      </div>
-      <div className="mx-auto flex max-w-[1200px] items-center justify-center gap-2 border-b border-border px-5 py-4">
-        <span className="text-lg">🪔</span>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-[0_4px_30px_rgba(217,119,7,0.1)]">
+      <div className="flex justify-between items-center px-gutter py-4 max-w-container-max-width mx-auto">
         <Link
           href="/"
-          className="text-xl font-extrabold tracking-tight text-brand-hover"
+          className="font-headline-lg text-headline-lg text-primary tracking-widest uppercase"
         >
-          Shri Fragrance
+          SHRI FRAGRANCE
         </Link>
-        <span className="text-lg">🪔</span>
+
+        <div className="hidden md:flex space-x-gutter">
+          <Link
+            href="/products"
+            className="font-headline-md text-headline-md tracking-tight text-on-surface-variant hover:text-tertiary transition-colors duration-300"
+          >
+            Fragrances
+          </Link>
+          <Link
+            href="/about"
+            className="font-headline-md text-headline-md tracking-tight text-on-surface-variant hover:text-tertiary transition-colors duration-300"
+          >
+            Heritage
+          </Link>
+          <Link
+            href="/products"
+            className="font-headline-md text-headline-md tracking-tight text-on-surface-variant hover:text-tertiary transition-colors duration-300"
+          >
+            Rituals
+          </Link>
+        </div>
+
+        <div className="flex space-x-unit">
+          <Link
+            href="/wishlist"
+            aria-label="Wishlist"
+            className="text-tertiary hover:text-secondary-fixed-dim transition-all duration-300"
+          >
+            <span className="material-symbols-outlined">favorite</span>
+          </Link>
+          <Link
+            href="/cart"
+            aria-label="Cart"
+            className="text-tertiary hover:text-secondary-fixed-dim transition-all duration-300"
+          >
+            <span className="material-symbols-outlined">shopping_bag</span>
+          </Link>
+        </div>
       </div>
-    </header>
+    </nav>
   );
 }

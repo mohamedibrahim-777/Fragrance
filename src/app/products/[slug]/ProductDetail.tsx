@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Minus, Plus, ShoppingBag, Heart } from "lucide-react";
-import { motion } from "framer-motion";
 import { useCart, useWishlist } from "@/lib/store";
 import { formatINR } from "@/lib/utils";
 
@@ -30,11 +28,12 @@ export function ProductDetail({ product }: { product: Product }) {
   useEffect(() => setMounted(true), []);
   const wished = mounted && wishItems.some((i) => i.productId === product.id);
   const [qty, setQty] = useState(1);
-  const [active, setActive] = useState(0);
+  const [activeImg, setActiveImg] = useState(0);
   const [added, setAdded] = useState(false);
-  const off = product.mrp > product.price
-    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-    : 0;
+  const off =
+    product.mrp > product.price
+      ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+      : 0;
 
   function handleAdd(buyNow = false) {
     add(
@@ -47,140 +46,209 @@ export function ProductDetail({ product }: { product: Product }) {
       },
       qty
     );
-    if (buyNow) {
-      router.push("/cart");
-    } else {
+    if (buyNow) router.push("/cart");
+    else {
       setAdded(true);
       setTimeout(() => setAdded(false), 1500);
     }
   }
 
+  const features =
+    product.features.length > 0
+      ? product.features.slice(0, 3)
+      : ["Deep Wood", "Creamy Heart", "Subtle Spice"];
+
   return (
-    <div className="mx-auto max-w-[1200px] px-5 py-8">
-      <p className="text-xs font-medium uppercase tracking-[0.2em] text-ink-muted">
-        {product.categoryName}
-      </p>
-
-      <div className="mt-4 grid gap-10 md:grid-cols-2">
-        {/* Gallery */}
-        <div>
-          <div className="overflow-hidden rounded-lg border border-border bg-brass-soft/30">
-            <motion.img
-              key={active}
-              src={product.images[active] ?? ""}
-              alt={product.name}
-              className="h-full w-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            />
-          </div>
-          {product.images.length > 1 && (
-            <div className="mt-3 flex gap-2">
-              {product.images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActive(i)}
-                  className={`h-16 w-16 overflow-hidden rounded border ${
-                    i === active ? "border-brass" : "border-border"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
+    <main className="flex-grow max-w-container-max-width mx-auto w-full px-gutter py-margin grid grid-cols-1 md:grid-cols-12 gap-margin mt-16">
+      {/* Image Section (Left Split) */}
+      <div className="md:col-span-6">
+        <div className="relative rounded-full overflow-hidden shadow-[0_0_40px_rgba(217,119,7,0.15)] border border-outline-variant/30 aspect-[3/4]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt={product.name}
+            className="w-full h-full object-cover"
+            src={product.images[activeImg] ?? ""}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-surface-container-highest/90 to-transparent backdrop-blur-sm">
+            <div className="flex gap-2 flex-wrap">
+              <span className="px-3 py-1 bg-surface-container rounded border border-outline-variant/50 font-label-sm text-label-sm text-tertiary uppercase">
+                AUTHENTIC
+              </span>
+              <span className="px-3 py-1 bg-surface-container rounded border border-outline-variant/50 font-label-sm text-label-sm text-tertiary uppercase">
+                SLOW BURN
+              </span>
+              {off > 0 && (
+                <span className="px-3 py-1 bg-primary-container rounded border border-error/50 font-label-sm text-label-sm text-on-primary-container uppercase">
+                  {off}% OFF
+                </span>
+              )}
             </div>
-          )}
+          </div>
         </div>
+        {product.images.length > 1 && (
+          <div className="mt-4 flex gap-2 flex-wrap">
+            {product.images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveImg(i)}
+                className={`h-16 w-16 overflow-hidden rounded border ${
+                  i === activeImg
+                    ? "border-tertiary shadow-[0_0_10px_rgba(247,189,72,0.3)]"
+                    : "border-outline-variant/40"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img} alt="" className="h-full w-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {/* Details */}
-        <div>
-          <h1 className="font-display text-3xl font-medium text-ink sm:text-4xl">
+      {/* Details Section (Right Split) */}
+      <div className="md:col-span-6 flex flex-col justify-center space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <p className="font-label-sm text-label-sm uppercase tracking-widest text-outline">
+            {product.categoryName} · SKU {product.sku}
+          </p>
+          <h1 className="font-headline-xl text-headline-xl text-on-surface">
             {product.name}
           </h1>
-          <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-3xl font-semibold text-brass">
-              {formatINR(product.price)}
-            </span>
-            {product.mrp > product.price && (
-              <>
-                <span className="text-base text-ink-muted line-through">
-                  {formatINR(product.mrp)}
-                </span>
-                <span className="rounded bg-maroon px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                  {off}% off
-                </span>
-              </>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-ink-muted">Inclusive of all taxes · SKU {product.sku}</p>
-
-          <p className="mt-6 text-base leading-relaxed text-ink-muted">
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
             {product.description}
           </p>
+          <div className="font-headline-lg text-headline-lg text-tertiary flex items-baseline gap-3 flex-wrap">
+            {formatINR(product.price)}
+            {product.mrp > product.price && (
+              <span className="font-body-md text-body-md text-outline line-through">
+                {formatINR(product.mrp)}
+              </span>
+            )}
+            <span className="font-body-md text-body-md text-on-surface-variant">
+              · {product.stock > 10 ? "In stock" : `Only ${product.stock} left`}
+            </span>
+          </div>
+        </div>
 
-          {product.features.length > 0 && (
-            <ul className="mt-6 grid grid-cols-2 gap-2 text-sm">
-              {product.features.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-ink">
-                  <Check size={14} className="text-brass" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          )}
+        {/* Fragrance Notes Chips */}
+        <div className="space-y-3">
+          <h3 className="font-headline-md text-headline-md text-secondary">
+            Fragrance Profile
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {features.map((f) => (
+              <div
+                key={f}
+                className="px-4 py-2 bg-surface-container-low border border-outline/40 rounded-full font-label-sm text-label-sm text-on-surface flex items-center gap-2 shadow-[inset_0_0_10px_rgba(217,119,7,0.05)]"
+              >
+                {f}
+              </div>
+            ))}
+          </div>
+        </div>
 
-          {/* Qty + actions */}
-          <div className="mt-8 flex items-center gap-4">
-            <div className="flex items-center rounded border border-border">
+        {/* Ritual Usage Guide (Bento) */}
+        <div className="space-y-4 pt-6 border-t border-outline-variant/30">
+          <h3 className="font-headline-md text-headline-md text-secondary">
+            Ritual Usage
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-surface-container border border-outline-variant/50 p-4 rounded-xl flex items-start gap-4 hover:shadow-[0_0_20px_rgba(217,119,7,0.1)] transition-shadow">
+              <span
+                className="material-symbols-outlined text-tertiary text-3xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                spa
+              </span>
+              <div>
+                <h4 className="font-headline-md text-body-lg text-on-surface mb-1">
+                  Meditation
+                </h4>
+                <p className="font-body-md text-label-sm text-on-surface-variant">
+                  Grounds the mind for deep stillness.
+                </p>
+              </div>
+            </div>
+            <div className="bg-surface-container border border-outline-variant/50 p-4 rounded-xl flex items-start gap-4 hover:shadow-[0_0_20px_rgba(217,119,7,0.1)] transition-shadow">
+              <span
+                className="material-symbols-outlined text-tertiary text-3xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                local_fire_department
+              </span>
+              <div>
+                <h4 className="font-headline-md text-body-lg text-on-surface mb-1">
+                  Aarti
+                </h4>
+                <p className="font-body-md text-label-sm text-on-surface-variant">
+                  Purifies the altar space.
+                </p>
+              </div>
+            </div>
+            <div className="bg-surface-container border border-outline-variant/50 p-4 rounded-xl flex items-start gap-4 hover:shadow-[0_0_20px_rgba(217,119,7,0.1)] transition-shadow sm:col-span-2">
+              <span
+                className="material-symbols-outlined text-tertiary text-3xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                self_improvement
+              </span>
+              <div>
+                <h4 className="font-headline-md text-body-lg text-on-surface mb-1">
+                  Evening Relaxation
+                </h4>
+                <p className="font-body-md text-label-sm text-on-surface-variant">
+                  Clears residual daily energies, fostering a calm transition to rest.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Qty + CTA */}
+        <div className="pt-8 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center rounded border border-outline-variant/40 bg-surface-container-low">
               <button
                 onClick={() => setQty(Math.max(1, qty - 1))}
-                className="px-3 py-2 text-ink-muted transition hover:text-brass"
+                className="px-3 py-2 text-tertiary hover:text-secondary-fixed-dim transition"
                 aria-label="Decrease"
               >
-                <Minus size={16} />
+                <span className="material-symbols-outlined text-[18px]">remove</span>
               </button>
-              <span className="min-w-[2.5rem] text-center text-sm font-medium">{qty}</span>
+              <span className="min-w-[2.5rem] text-center font-label-sm tracking-widest text-on-surface">
+                {qty}
+              </span>
               <button
                 onClick={() => setQty(Math.min(product.stock, qty + 1))}
-                className="px-3 py-2 text-ink-muted transition hover:text-brass"
+                className="px-3 py-2 text-tertiary hover:text-secondary-fixed-dim transition"
                 aria-label="Increase"
               >
-                <Plus size={16} />
+                <span className="material-symbols-outlined text-[18px]">add</span>
               </button>
             </div>
-            <p className="text-xs text-ink-muted">
-              {product.stock > 10 ? "In stock" : `Only ${product.stock} left`}
-            </p>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            {/* Add to Cart — emerald green */}
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => handleAdd(false)}
-              style={{ backgroundColor: "#1F7A4D" }}
-              className="inline-flex items-center justify-center gap-2 rounded px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-md transition hover:brightness-110"
+              className="w-full sm:w-auto bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase tracking-widest py-4 px-8 rounded border border-tertiary/50 hover:shadow-[0_0_25px_rgba(217,119,7,0.3)] transition-all duration-300 flex items-center justify-center gap-3"
             >
-              {added ? (
-                <>
-                  <Check size={16} /> Added
-                </>
-              ) : (
-                <>
-                  <ShoppingBag size={16} /> Add to cart
-                </>
-              )}
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                shopping_bag
+              </span>
+              {added ? "Added to Ritual Bag" : "Add to Ritual Bag"}
             </button>
-
-            {/* Buy Now — brand amber */}
             <button
               onClick={() => handleAdd(true)}
-              className="rounded bg-brand px-6 py-3 text-sm font-bold uppercase tracking-wider text-black shadow-brass transition hover:bg-brand-hover"
+              className="w-full sm:w-auto bg-tertiary text-on-tertiary font-label-sm text-label-sm uppercase tracking-widest py-4 px-8 rounded border border-tertiary/50 hover:shadow-[0_0_25px_rgba(247,189,72,0.4)] transition-all duration-300 flex items-center justify-center gap-3"
             >
-              Buy now
+              Buy Now
             </button>
-
-            {/* Wishlist — rose pink */}
             <button
               onClick={() =>
                 toggleWish({
@@ -193,20 +261,22 @@ export function ProductDetail({ product }: { product: Product }) {
                 })
               }
               aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-              style={{
-                backgroundColor: wished ? "#DC2C5C" : "transparent",
-                borderColor: "#DC2C5C",
-                color: wished ? "#FFFFFF" : "#DC2C5C",
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded border-2 px-6 py-3 text-sm font-bold uppercase tracking-wider shadow-md transition hover:brightness-110"
+              className={`p-4 rounded border transition-all duration-300 ${
+                wished
+                  ? "bg-primary-container text-on-primary-container border-error/50"
+                  : "bg-surface-container-low text-tertiary border-outline-variant/40 hover:shadow-[0_0_20px_rgba(247,189,72,0.2)]"
+              }`}
             >
-              <Heart size={16} className={wished ? "fill-white" : ""} />
-              {wished ? "Wishlisted" : "Wishlist"}
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: wished ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                favorite
+              </span>
             </button>
           </div>
-
         </div>
       </div>
-    </div>
+    </main>
   );
 }
