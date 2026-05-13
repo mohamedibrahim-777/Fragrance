@@ -11,7 +11,8 @@ import {
   ArrowLeft, Package, Clock, CheckCircle2, Truck,
   Star, ChevronRight, ChevronLeft, Flame, Sparkles, Gift,
   Crown, Copy, Trash2, Plus, Edit3, IndianRupee,
-  CircleDot, TrendingUp, Calendar, MapPinned, Menu, X
+  CircleDot, TrendingUp, Calendar, MapPinned, Menu, X,
+  Bell, Shield, LogOut
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -109,7 +110,7 @@ const wishlistItems = [
 ]
 
 const rewards = [
-  { id: 1, title: '₹200 Off Next Order', points: 500, description: 'Get ₹200 discount on your next purchase', icon: IndianRupee, color: 'from-temple-gold to-temple-brass' },
+  { id: 1, title: '\u20B9200 Off Next Order', points: 500, description: 'Get \u20B9200 discount on your next purchase', icon: IndianRupee, color: 'from-temple-gold to-temple-brass' },
   { id: 2, title: 'Free Shipping 30 Days', points: 300, description: 'Enjoy free delivery for the next 30 days', icon: Truck, color: 'from-temple-saffron to-temple-gold' },
   { id: 3, title: 'Exclusive Temple Visit', points: 2000, description: 'A divine temple experience with curated pooja', icon: Crown, color: 'from-temple-deep to-temple-maroon' },
   { id: 4, title: 'Mystery Fragrance Box', points: 800, description: 'A surprise box of 5 premium fragrances', icon: Gift, color: 'from-temple-brass to-temple-saffron' },
@@ -279,7 +280,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   return (
     <div className="bg-temple-maroon text-temple-cream px-4 py-3 rounded-lg shadow-xl border border-temple-gold/30">
       <p className="text-xs text-temple-gold font-medium mb-1">{label}</p>
-      <p className="text-sm font-bold">₹{payload[0].value.toLocaleString('en-IN')}</p>
+      <p className="text-sm font-bold">{'\u20B9'}{payload[0].value.toLocaleString('en-IN')}</p>
     </div>
   )
 }
@@ -316,48 +317,394 @@ export default function UserDashboard() {
   const rewardsInView = useInView(rewardsRef, { once: true, margin: '-50px' })
   const addressesInView = useInView(addressesRef, { once: true, margin: '-50px' })
 
+  // Content for each nav section
+  const navContent: Record<string, React.ReactNode> = {
+    'My Orders': null, // default content rendered below
+    Wishlist: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Heart className="h-5 w-5 text-temple-gold" />
+              My <span className="gold-text">Wishlist</span>
+            </h2>
+            <Badge className="bg-temple-deep/10 text-temple-deep border-temple-deep/20 text-xs">
+              {userData.wishlistCount} items
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {wishlistItems.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 30, rotateY: -15 }}
+                animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                transition={{ delay: i * 0.12, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                whileHover={{ y: -8, boxShadow: '0 20px 50px rgba(197,151,46,0.2)' }}
+              >
+                <Card className="border-temple-gold/20 bg-white overflow-hidden group flex flex-col">
+                  <div className="relative aspect-square overflow-hidden">
+                    <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <motion.div
+                      className="absolute top-3 right-3"
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full bg-white/90 border-0 shadow-md hover:bg-red-50">
+                        <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                      </Button>
+                    </motion.div>
+                    {!item.inStock && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Badge className="bg-red-500/90 text-white text-xs">Out of Stock</Badge>
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-4 flex flex-col flex-1">
+                    <h3 className="font-semibold text-sm group-hover:text-temple-gold transition-colors">{item.name}</h3>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-lg font-bold">{'\u20B9'}{item.price}</span>
+                      <span className="text-xs text-muted-foreground line-through">{'\u20B9'}{item.originalPrice}</span>
+                      <Badge className="bg-temple-saffron/10 text-temple-saffron border-0 text-[10px] px-1.5">
+                        {Math.round((1 - item.price / item.originalPrice) * 100)}% OFF
+                      </Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      className={`w-full mt-auto pt-3 text-xs ${
+                        item.inStock
+                          ? 'bg-temple-gold hover:bg-temple-brass text-white'
+                          : 'bg-muted text-muted-foreground cursor-not-allowed'
+                      }`}
+                      disabled={!item.inStock}
+                    >
+                      <ShoppingBag className="h-3 w-3 mr-1" />
+                      {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    ),
+    Rewards: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Award className="h-5 w-5 text-temple-gold" />
+              Rewards & <span className="gold-text">Loyalty</span>
+            </h2>
+            <Badge className="bg-temple-amber/20 text-temple-amber border-temple-amber/30 text-xs">
+              <Flame className="h-3 w-3 mr-1" />{userData.points.toLocaleString('en-IN')} pts
+            </Badge>
+          </div>
+          {/* Points Progress */}
+          <Card className="border-temple-gold/20 bg-white mb-6 overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-temple-gold" />
+                  <span className="font-semibold">Temple Gold Member</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-bold text-temple-gold">{userData.points.toLocaleString('en-IN')}</span>
+                  <span className="text-muted-foreground">/ {userData.nextTierPoints.toLocaleString('en-IN')} pts</span>
+                </div>
+              </div>
+              <div className="h-3 rounded-full bg-temple-gold/10 overflow-hidden mb-2">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-temple-gold via-temple-amber to-temple-saffron"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(userData.points / userData.nextTierPoints) * 100}%` }}
+                  transition={{ delay: 0.3, duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Current: Temple Gold</span>
+                <span>Next: Temple Diamond ({userData.nextTierPoints - userData.points} pts away)</span>
+              </div>
+              <Separator className="my-3 bg-temple-gold/10" />
+              <div className="flex flex-wrap gap-3">
+                {['Free shipping on all orders', 'Early access to new fragrances', '10% off on festive collections', 'Priority customer support'].map((benefit, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-xs">
+                    <CheckCircle2 className="h-3 w-3 text-temple-gold" />
+                    <span className="text-muted-foreground">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          {/* Available Rewards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {rewards.map((reward, i) => (
+              <motion.div
+                key={reward.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                whileHover={{ y: -5, boxShadow: '0 15px 40px rgba(197,151,46,0.2)' }}
+              >
+                <Card className="border-temple-gold/20 bg-white overflow-hidden relative flex flex-col">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-temple-gold via-temple-amber to-temple-saffron" />
+                  <CardContent className="p-4 pt-5 flex flex-col flex-1">
+                    <motion.div
+                      className={`w-10 h-10 rounded-xl bg-gradient-to-br ${reward.color} text-white flex items-center justify-center mb-3 shadow-md`}
+                      whileHover={{ rotate: 5, scale: 1.1 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <reward.icon className="h-5 w-5" />
+                    </motion.div>
+                    <h3 className="font-semibold text-sm mb-1">{reward.title}</h3>
+                    <p className="text-xs text-muted-foreground mb-3">{reward.description}</p>
+                    <div className="flex items-center justify-between mt-auto">
+                      <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-xs">
+                        <Flame className="h-2.5 w-2.5 mr-0.5" />{reward.points} pts
+                      </Badge>
+                      <Button
+                        size="sm"
+                        className={`text-[10px] h-7 ${
+                          userData.points >= reward.points
+                            ? 'bg-temple-gold hover:bg-temple-brass text-white'
+                            : 'bg-muted text-muted-foreground cursor-not-allowed'
+                        }`}
+                        disabled={userData.points < reward.points}
+                      >
+                        {userData.points >= reward.points ? 'Redeem' : 'Not Enough'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    ),
+    Addresses: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-temple-gold" />
+              Saved <span className="gold-text">Addresses</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {addresses.map((addr, i) => (
+              <motion.div
+                key={addr.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(197,151,46,0.15)' }}
+              >
+                <Card className={`border-temple-gold/20 bg-white overflow-hidden relative ${addr.isDefault ? 'ring-1 ring-temple-gold/30' : ''}`}>
+                  {addr.isDefault && (
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-temple-gold to-temple-saffron" />
+                  )}
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <MapPinned className="h-4 w-4 text-temple-gold" />
+                        <span className="font-semibold text-sm">{addr.label}</span>
+                        {addr.isDefault && (
+                          <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-[9px] px-1.5">Default</Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-temple-gold">
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-0.5">
+                      <p className="font-medium text-foreground">{addr.name}</p>
+                      <p>{addr.line1}</p>
+                      <p>{addr.line2} - {addr.pincode}</p>
+                      <p className="flex items-center gap-1 mt-1"><Copy className="h-3 w-3" />{addr.phone}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+            {/* Add New Address Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(197,151,46,0.1)' }}
+            >
+              <Card className="border-2 border-dashed border-temple-gold/30 bg-transparent hover:bg-temple-gold/5 transition-colors cursor-pointer h-full">
+                <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[180px]">
+                  <motion.div
+                    className="w-12 h-12 rounded-full bg-temple-gold/10 flex items-center justify-center mb-3"
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    transition={{ type: 'spring' }}
+                  >
+                    <Plus className="h-5 w-5 text-temple-gold" />
+                  </motion.div>
+                  <p className="font-semibold text-sm text-temple-gold">Add New Address</p>
+                  <p className="text-xs text-muted-foreground mt-1">Save a new delivery location</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+    ),
+    Profile: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><User className="h-5 w-5 text-temple-gold" />Profile Settings</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center gap-4 pb-4 border-b border-temple-gold/10">
+                <div className="w-16 h-16 rounded-full border-2 border-temple-gold flex items-center justify-center bg-temple-gold/10">
+                  <span className="text-xl font-bold text-temple-gold">{userData.avatar}</span>
+                </div>
+                <div>
+                  <p className="font-semibold">{userData.name}</p>
+                  <p className="text-sm text-muted-foreground">{userData.email}</p>
+                  <Badge className="bg-temple-gold/10 text-temple-amber border-temple-gold/20 text-xs mt-1">
+                    <Crown className="h-2.5 w-2.5 mr-0.5" />{userData.membership}
+                  </Badge>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-temple-deep border-b border-temple-gold/10 pb-2">Personal Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Full Name</label>
+                    <input type="text" defaultValue={userData.name} className="mt-1 w-full px-3 py-2 border border-temple-gold/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-temple-gold/30" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Email</label>
+                    <input type="email" defaultValue={userData.email} className="mt-1 w-full px-3 py-2 border border-temple-gold/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-temple-gold/30" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Phone</label>
+                    <input type="tel" defaultValue={userData.phone} className="mt-1 w-full px-3 py-2 border border-temple-gold/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-temple-gold/30" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Member Since</label>
+                    <input type="text" defaultValue={userData.memberSince} disabled className="mt-1 w-full px-3 py-2 border border-temple-gold/20 rounded-lg text-sm bg-muted/50 cursor-not-allowed" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button className="bg-temple-gold hover:bg-temple-brass text-white">Save Changes</Button>
+                <Button variant="outline" className="border-temple-gold/30 hover:bg-temple-gold/10">Cancel</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+    Settings: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Settings className="h-5 w-5 text-temple-gold" />Settings</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-temple-deep border-b border-temple-gold/10 pb-2">Notifications</h3>
+                <div className="space-y-3">
+                  {['Order updates', 'Promotional offers', 'Price drop alerts', 'New arrivals', 'Loyalty points updates'].map((setting) => (
+                    <label key={setting} className="flex items-center justify-between p-3 rounded-lg border border-temple-gold/10 hover:bg-temple-gold/5 cursor-pointer">
+                      <span className="text-sm">{setting}</span>
+                      <input type="checkbox" defaultChecked className="accent-temple-gold h-4 w-4" />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-temple-deep border-b border-temple-gold/10 pb-2 pt-2">Security</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-temple-gold/10">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-4 w-4 text-temple-gold" />
+                      <div>
+                        <p className="text-sm font-medium">Two-Factor Authentication</p>
+                        <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">Enable</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-temple-gold/10">
+                    <div className="flex items-center gap-3">
+                      <LogOut className="h-4 w-4 text-temple-gold" />
+                      <div>
+                        <p className="text-sm font-medium">Change Password</p>
+                        <p className="text-xs text-muted-foreground">Update your account password</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">Update</Button>
+                  </div>
+                </div>
+              </div>
+              <Button className="bg-temple-gold hover:bg-temple-brass text-white">Save Settings</Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+  }
+
   return (
     <div className="min-h-screen bg-temple-cream flex">
       {/* ====== SIDEBAR (Desktop) ====== */}
       <motion.aside
-        className={`hidden md:flex flex-col fixed top-0 left-0 h-screen z-40 deep-maroon-gradient border-r border-temple-gold/20 transition-all duration-300 ${
-          sidebarCollapsed ? 'w-[72px]' : 'w-64'
-        }`}
-        initial={{ x: -260 }}
-        animate={{ x: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="hidden md:flex flex-col fixed top-0 left-0 h-screen z-40 deep-maroon-gradient border-r border-temple-gold/20"
+        animate={{ width: sidebarCollapsed ? 72 : 256 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={false}
       >
         {/* Sidebar Header */}
-        <div className="p-4 flex items-center gap-3 border-b border-temple-gold/15">
+        <div className="h-16 flex items-center border-b border-temple-gold/15 px-3">
           <motion.div
-            className="w-10 h-10 rounded-full overflow-hidden border-2 border-temple-gold flex-shrink-0"
+            className="w-10 h-10 rounded-full bg-temple-gold/20 flex items-center justify-center flex-shrink-0 cursor-pointer"
             animate={{ boxShadow: ['0 0 5px rgba(197,151,46,0.3)', '0 0 20px rgba(197,151,46,0.6)', '0 0 5px rgba(197,151,46,0.3)'] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <Image src="/images/logo.png" alt="Shri Fragrance" width={40} height={40} className="object-cover" />
+            <Flame className="h-5 w-5 text-temple-gold" />
           </motion.div>
           <AnimatePresence>
             {!sidebarCollapsed && (
               <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden whitespace-nowrap"
+                className="overflow-hidden whitespace-nowrap ml-3"
               >
                 <h2 className="text-sm font-bold gold-text tracking-wider">SHRI FRAGRANCE</h2>
                 <p className="text-[10px] text-temple-cream/40 tracking-widest uppercase">My Account</p>
               </motion.div>
             )}
           </AnimatePresence>
-          {/* Collapse Toggle - inside sidebar header */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="ml-auto w-7 h-7 rounded-full bg-temple-gold/20 hover:bg-temple-gold/40 text-temple-gold flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
+          {/* Collapse Toggle */}
+          <AnimatePresence>
+            {!sidebarCollapsed && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setSidebarCollapsed(true)}
+                className="ml-auto w-7 h-7 rounded-full bg-temple-gold/20 hover:bg-temple-gold/40 text-temple-gold flex items-center justify-center transition-colors hover:scale-110 flex-shrink-0"
+                title="Collapse sidebar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* User Mini Profile */}
@@ -384,69 +731,88 @@ export default function UserDashboard() {
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4">
-          <nav className="space-y-0.5 px-3">
-            {navItems.map((item, i) => (
-              <motion.button
-                key={item.label}
-                custom={i}
-                variants={sidebarItemVariants}
-                initial="hidden"
-                animate="visible"
-                onClick={() => setActiveNav(item.label)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
-                  activeNav === item.label
-                    ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
-                    : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
-                }`}
-                whileHover={{ x: 4, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {activeNav === item.label && (
-                  <motion.div
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full"
-                    layoutId="userActiveNav"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <item.icon className="h-5 w-5 flex-shrink-0 translate-y-[0.5px]" />
-                <AnimatePresence>
-                  {!sidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
+          <nav className="space-y-0.5 px-2">
+            {navItems.map((item, i) => {
+              const Icon = item.icon
+              const isActive = activeNav === item.label
+              return (
+                <motion.button
+                  key={item.label}
+                  custom={i}
+                  variants={sidebarItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  onClick={() => setActiveNav(item.label)}
+                  title={sidebarCollapsed ? item.label : undefined}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 group relative h-10 ${
+                    isActive
+                      ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
+                      : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isActive && (
+                    <motion.div
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full"
+                      layoutId="userActiveNav"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
                   )}
-                </AnimatePresence>
-                {!sidebarCollapsed && item.label === 'Wishlist' && (
-                  <Badge className="ml-auto bg-temple-deep/80 text-white text-[9px] px-1.5 py-0 min-w-[18px] h-[18px]">
-                    {userData.wishlistCount}
-                  </Badge>
-                )}
-              </motion.button>
-            ))}
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                  <AnimatePresence>
+                    {!sidebarCollapsed && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  {!sidebarCollapsed && item.label === 'Wishlist' && (
+                    <Badge className="ml-auto bg-temple-deep/80 text-white text-[9px] px-1.5 py-0 min-w-[18px] h-[18px]">
+                      {userData.wishlistCount}
+                    </Badge>
+                  )}
+                </motion.button>
+              )
+            })}
           </nav>
         </ScrollArea>
 
+        {/* Expand button when collapsed */}
+        {sidebarCollapsed && (
+          <div className="px-2 pb-2">
+            <motion.button
+              onClick={() => setSidebarCollapsed(false)}
+              className="w-full flex items-center justify-center p-2 rounded-lg bg-temple-gold/10 hover:bg-temple-gold/20 text-temple-gold transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Expand sidebar"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </motion.button>
+          </div>
+        )}
+
         {/* Back to Store */}
-        <div className="p-3 border-t border-temple-gold/15">
+        <div className="p-2 border-t border-temple-gold/15">
           <Link href="/">
             <motion.button
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
-              whileHover={{ x: 4, scale: 1.02 }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-colors"
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <ArrowLeft className="h-5 w-5 flex-shrink-0" />
+              <ArrowLeft className={`h-5 w-5 flex-shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
               <AnimatePresence>
                 {!sidebarCollapsed && (
                   <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
                     className="text-sm font-medium whitespace-nowrap overflow-hidden"
                   >
                     Back to Store
@@ -485,7 +851,7 @@ export default function UserDashboard() {
               onClick={() => setMobileMenuOpen(false)}
             />
             <motion.aside
-              className="md:hidden fixed top-0 left-0 h-screen w-72 z-50 deep-maroon-gradient border-r border-temple-gold/20"
+              className="md:hidden fixed top-0 left-0 h-screen w-72 z-50 deep-maroon-gradient border-r border-temple-gold/20 flex flex-col"
               initial={{ x: -288 }}
               animate={{ x: 0 }}
               exit={{ x: -288 }}
@@ -493,8 +859,8 @@ export default function UserDashboard() {
             >
               {/* Mobile Sidebar Header */}
               <div className="p-4 flex items-center gap-3 border-b border-temple-gold/15">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-temple-gold flex-shrink-0">
-                  <Image src="/images/logo.png" alt="Shri Fragrance" width={40} height={40} className="object-cover" />
+                <div className="w-10 h-10 rounded-full bg-temple-gold/20 flex items-center justify-center flex-shrink-0">
+                  <Flame className="h-5 w-5 text-temple-gold" />
                 </div>
                 <div className="overflow-hidden whitespace-nowrap">
                   <h2 className="text-sm font-bold gold-text tracking-wider">SHRI FRAGRANCE</h2>
@@ -533,7 +899,7 @@ export default function UserDashboard() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
                       onClick={() => { setActiveNav(item.label); setMobileMenuOpen(false) }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 group relative h-10 ${
                         activeNav === item.label
                           ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
                           : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
@@ -557,7 +923,7 @@ export default function UserDashboard() {
               {/* Mobile Back to Store */}
               <div className="p-3 border-t border-temple-gold/15">
                 <Link href="/" onClick={() => setMobileMenuOpen(false)}>
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all">
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-colors">
                     <ArrowLeft className="h-5 w-5 flex-shrink-0" />
                     <span className="text-sm font-medium">Back to Store</span>
                   </button>
@@ -569,7 +935,12 @@ export default function UserDashboard() {
       </AnimatePresence>
 
       {/* ====== MAIN CONTENT ====== */}
-      <main className={`flex-1 transition-all duration-300 will-change-[margin-left] ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+      <motion.main
+        className="flex-1 will-change-[margin-left]"
+        animate={{ marginLeft: sidebarCollapsed ? 72 : 256 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={false}
+      >
         {/* Profile Header */}
         <motion.header
           ref={profileRef}
@@ -665,6 +1036,11 @@ export default function UserDashboard() {
         </motion.header>
 
         <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* ====== CONDITIONAL NAV CONTENT ====== */}
+          {activeNav !== 'My Orders' && navContent[activeNav] ? (
+            navContent[activeNav]
+          ) : (
+          <>
           {/* ====== RECENT ORDERS ====== */}
           <motion.div ref={ordersRef}>
             <motion.div
@@ -727,7 +1103,7 @@ export default function UserDashboard() {
                               <p className="text-sm font-medium truncate">{item.name}</p>
                               <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
                             </div>
-                            <span className="text-sm font-semibold whitespace-nowrap">₹{item.price.toLocaleString('en-IN')}</span>
+                            <span className="text-sm font-semibold whitespace-nowrap">{'\u20B9'}{item.price.toLocaleString('en-IN')}</span>
                           </div>
                         ))}
                       </div>
@@ -739,7 +1115,7 @@ export default function UserDashboard() {
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-3 border-t border-temple-gold/10">
-                        <span className="text-base font-bold">Total: ₹{order.total.toLocaleString('en-IN')}</span>
+                        <span className="text-base font-bold">Total: {'\u20B9'}{order.total.toLocaleString('en-IN')}</span>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10 h-8">
                             <Truck className="h-3 w-3 mr-1" />Track
@@ -792,7 +1168,7 @@ export default function UserDashboard() {
                       <p className="text-[10px] text-muted-foreground">Total Spent</p>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-temple-saffron/5">
-                      <p className="text-lg font-bold text-temple-deep">₹{userData.avgOrder}</p>
+                      <p className="text-lg font-bold text-temple-deep">{'\u20B9'}{userData.avgOrder}</p>
                       <p className="text-[10px] text-muted-foreground">Avg Order</p>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-temple-deep/5">
@@ -873,274 +1249,9 @@ export default function UserDashboard() {
               </Card>
             </motion.div>
           </div>
-
-          <TempleDivider />
-
-          {/* ====== WISHLIST ====== */}
-          <motion.div ref={wishlistRef}>
-            <motion.div
-              className="flex items-center justify-between mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={wishlistInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5 }}
-            >
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Heart className="h-5 w-5 text-temple-gold" />
-                My <span className="gold-text">Wishlist</span>
-              </h2>
-              <Badge className="bg-temple-deep/10 text-temple-deep border-temple-deep/20 text-xs">
-                {userData.wishlistCount} items
-              </Badge>
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {wishlistItems.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 30, rotateY: -15 }}
-                  animate={wishlistInView ? { opacity: 1, y: 0, rotateY: 0 } : {}}
-                  transition={{ delay: i * 0.12, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  whileHover={{ y: -8, boxShadow: '0 20px 50px rgba(197,151,46,0.2)' }}
-                >
-                  <Card className="border-temple-gold/20 bg-white overflow-hidden group flex flex-col">
-                    <div className="relative aspect-square overflow-hidden">
-                      <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                      <motion.div
-                        className="absolute top-3 right-3"
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full bg-white/90 border-0 shadow-md hover:bg-red-50">
-                          <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-                        </Button>
-                      </motion.div>
-                      {!item.inStock && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <Badge className="bg-red-500/90 text-white text-xs">Out of Stock</Badge>
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4 flex flex-col flex-1">
-                      <h3 className="font-semibold text-sm group-hover:text-temple-gold transition-colors">{item.name}</h3>
-                      <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-lg font-bold">₹{item.price}</span>
-                        <span className="text-xs text-muted-foreground line-through">₹{item.originalPrice}</span>
-                        <Badge className="bg-temple-saffron/10 text-temple-saffron border-0 text-[10px] px-1.5">
-                          {Math.round((1 - item.price / item.originalPrice) * 100)}% OFF
-                        </Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        className={`w-full mt-auto pt-3 text-xs ${
-                          item.inStock
-                            ? 'bg-temple-gold hover:bg-temple-brass text-white'
-                            : 'bg-muted text-muted-foreground cursor-not-allowed'
-                        }`}
-                        disabled={!item.inStock}
-                      >
-                        <ShoppingBag className="h-3 w-3 mr-1" />
-                        {item.inStock ? 'Add to Cart' : 'Out of Stock'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          <TempleDivider />
-
-          {/* ====== REWARDS & LOYALTY ====== */}
-          <motion.div ref={rewardsRef}>
-            <motion.div
-              className="flex items-center justify-between mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={rewardsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5 }}
-            >
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Award className="h-5 w-5 text-temple-gold" />
-                Rewards & <span className="gold-text">Loyalty</span>
-              </h2>
-              <Badge className="bg-temple-amber/20 text-temple-amber border-temple-amber/30 text-xs">
-                <Flame className="h-3 w-3 mr-1" />{userData.points.toLocaleString('en-IN')} pts
-              </Badge>
-            </motion.div>
-
-            {/* Points Progress */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={rewardsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              <Card className="border-temple-gold/20 bg-white mb-6 overflow-hidden">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-temple-gold" />
-                      <span className="font-semibold">Temple Gold Member</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-bold text-temple-gold">{userData.points.toLocaleString('en-IN')}</span>
-                      <span className="text-muted-foreground">/ {userData.nextTierPoints.toLocaleString('en-IN')} pts</span>
-                    </div>
-                  </div>
-                  <div className="h-3 rounded-full bg-temple-gold/10 overflow-hidden mb-2">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-temple-gold via-temple-amber to-temple-saffron"
-                      initial={{ width: 0 }}
-                      animate={rewardsInView ? { width: `${(userData.points / userData.nextTierPoints) * 100}%` } : { width: 0 }}
-                      transition={{ delay: 0.3, duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Current: Temple Gold</span>
-                    <span>Next: Temple Diamond ({userData.nextTierPoints - userData.points} pts away)</span>
-                  </div>
-                  <Separator className="my-3 bg-temple-gold/10" />
-                  <div className="flex flex-wrap gap-3">
-                    {['Free shipping on all orders', 'Early access to new fragrances', '10% off on festive collections', 'Priority customer support'].map((benefit, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-xs">
-                        <CheckCircle2 className="h-3 w-3 text-temple-gold" />
-                        <span className="text-muted-foreground">{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Available Rewards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {rewards.map((reward, i) => (
-                <motion.div
-                  key={reward.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={rewardsInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  whileHover={{ y: -5, boxShadow: '0 15px 40px rgba(197,151,46,0.2)' }}
-                >
-                  <Card className="border-temple-gold/20 bg-white overflow-hidden relative flex flex-col">
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-temple-gold via-temple-amber to-temple-saffron" />
-                    <CardContent className="p-4 pt-5 flex flex-col flex-1">
-                      <motion.div
-                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${reward.color} text-white flex items-center justify-center mb-3 shadow-md`}
-                        whileHover={{ rotate: 5, scale: 1.1 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                      >
-                        <reward.icon className="h-5 w-5" />
-                      </motion.div>
-                      <h3 className="font-semibold text-sm mb-1">{reward.title}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">{reward.description}</p>
-                      <div className="flex items-center justify-between mt-auto">
-                        <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-xs">
-                          <Flame className="h-2.5 w-2.5 mr-0.5" />{reward.points} pts
-                        </Badge>
-                        <Button
-                          size="sm"
-                          className={`text-[10px] h-7 ${
-                            userData.points >= reward.points
-                              ? 'bg-temple-gold hover:bg-temple-brass text-white'
-                              : 'bg-muted text-muted-foreground cursor-not-allowed'
-                          }`}
-                          disabled={userData.points < reward.points}
-                        >
-                          {userData.points >= reward.points ? 'Redeem' : 'Not Enough'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          <TempleDivider />
-
-          {/* ====== SAVED ADDRESSES ====== */}
-          <motion.div ref={addressesRef}>
-            <motion.div
-              className="flex items-center justify-between mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={addressesInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5 }}
-            >
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-temple-gold" />
-                Saved <span className="gold-text">Addresses</span>
-              </h2>
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {addresses.map((addr, i) => (
-                <motion.div
-                  key={addr.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={addressesInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: i * 0.1, duration: 0.5 }}
-                  whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(197,151,46,0.15)' }}
-                >
-                  <Card className={`border-temple-gold/20 bg-white overflow-hidden relative ${addr.isDefault ? 'ring-1 ring-temple-gold/30' : ''}`}>
-                    {addr.isDefault && (
-                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-temple-gold to-temple-saffron" />
-                    )}
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <MapPinned className="h-4 w-4 text-temple-gold" />
-                          <span className="font-semibold text-sm">{addr.label}</span>
-                          {addr.isDefault && (
-                            <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-[9px] px-1.5">Default</Badge>
-                          )}
-                        </div>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-temple-gold">
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-0.5">
-                        <p className="font-medium text-foreground">{addr.name}</p>
-                        <p>{addr.line1}</p>
-                        <p>{addr.line2} - {addr.pincode}</p>
-                        <p className="flex items-center gap-1 mt-1"><Copy className="h-3 w-3" />{addr.phone}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-
-              {/* Add New Address Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={addressesInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(197,151,46,0.1)' }}
-              >
-                <Card className="border-2 border-dashed border-temple-gold/30 bg-transparent hover:bg-temple-gold/5 transition-colors cursor-pointer h-full">
-                  <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[180px]">
-                    <motion.div
-                      className="w-12 h-12 rounded-full bg-temple-gold/10 flex items-center justify-center mb-3"
-                      whileHover={{ scale: 1.1, rotate: 90 }}
-                      transition={{ type: 'spring' }}
-                    >
-                      <Plus className="h-5 w-5 text-temple-gold" />
-                    </motion.div>
-                    <p className="font-semibold text-sm text-temple-gold">Add New Address</p>
-                    <p className="text-xs text-muted-foreground mt-1">Save a new delivery location</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Bottom spacer */}
-          <div className="h-8" />
+          </>)}
         </div>
-      </main>
+      </motion.main>
     </div>
   )
 }
