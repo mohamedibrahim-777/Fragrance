@@ -9,9 +9,9 @@ import {
 import {
   ShoppingBag, Heart, Award, MapPin, User, Settings,
   ArrowLeft, Package, Clock, CheckCircle2, Truck,
-  Star, ChevronRight, Flame, Sparkles, Gift,
+  Star, ChevronRight, ChevronLeft, Flame, Sparkles, Gift,
   Crown, Copy, Trash2, Plus, Edit3, IndianRupee,
-  CircleDot, TrendingUp, Calendar, MapPinned
+  CircleDot, TrendingUp, Calendar, MapPinned, Menu, X
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -300,6 +300,7 @@ const navItems = [
 export default function UserDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activeNav, setActiveNav] = useState('My Orders')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const profileRef = useRef(null)
   const ordersRef = useRef(null)
@@ -317,7 +318,7 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-temple-cream flex">
-      {/* ====== SIDEBAR ====== */}
+      {/* ====== SIDEBAR (Desktop) ====== */}
       <motion.aside
         className={`hidden md:flex flex-col fixed top-0 left-0 h-screen z-40 deep-maroon-gradient border-r border-temple-gold/20 transition-all duration-300 ${
           sidebarCollapsed ? 'w-[72px]' : 'w-64'
@@ -349,6 +350,14 @@ export default function UserDashboard() {
               </motion.div>
             )}
           </AnimatePresence>
+          {/* Collapse Toggle - inside sidebar header */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="ml-auto w-7 h-7 rounded-full bg-temple-gold/20 hover:bg-temple-gold/40 text-temple-gold flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
         </div>
 
         {/* User Mini Profile */}
@@ -384,6 +393,7 @@ export default function UserDashboard() {
                 initial="hidden"
                 animate="visible"
                 onClick={() => setActiveNav(item.label)}
+                title={sidebarCollapsed ? item.label : undefined}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
                   activeNav === item.label
                     ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
@@ -424,46 +434,36 @@ export default function UserDashboard() {
 
         {/* Back to Store */}
         <div className="p-3 border-t border-temple-gold/15">
-          <motion.div custom={6} variants={sidebarItemVariants} initial="hidden" animate="visible">
-            <Link href="/">
-              <motion.button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
-                whileHover={{ x: 4, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <ArrowLeft className="h-5 w-5 flex-shrink-0" />
-                <AnimatePresence>
-                  {!sidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
-                    >
-                      Back to Store
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            </Link>
-          </motion.div>
+          <Link href="/">
+            <motion.button
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
+              whileHover={{ x: 4, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ArrowLeft className="h-5 w-5 flex-shrink-0" />
+              <AnimatePresence>
+                {!sidebarCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                  >
+                    Back to Store
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </Link>
         </div>
-
-        {/* Collapse Toggle */}
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-temple-gold text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform border-2 border-temple-cream z-50"
-        >
-          {sidebarCollapsed ? <ChevronRight className="h-3 w-3" /> : <ArrowLeft className="h-3 w-3" />}
-        </button>
       </motion.aside>
 
-      {/* ====== MOBILE HEADER ====== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-temple-cream/100 border-b border-temple-gold/20 px-4 py-3 flex items-center justify-between">
+      {/* ====== MOBILE HEADER + DRAWER ====== */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-temple-cream border-b border-temple-gold/20 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-temple-gold">
-            <Image src="/images/logo.png" alt="Logo" width={32} height={32} className="object-cover" />
-          </div>
+          <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-temple-deep h-9 w-9">
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
           <h2 className="text-sm font-bold gold-text tracking-wider">MY ACCOUNT</h2>
         </div>
         <Link href="/">
@@ -472,6 +472,101 @@ export default function UserDashboard() {
           </Button>
         </Link>
       </div>
+
+      {/* Mobile Sidebar Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              className="md:hidden fixed inset-0 bg-black/50 z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.aside
+              className="md:hidden fixed top-0 left-0 h-screen w-72 z-50 deep-maroon-gradient border-r border-temple-gold/20"
+              initial={{ x: -288 }}
+              animate={{ x: 0 }}
+              exit={{ x: -288 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              {/* Mobile Sidebar Header */}
+              <div className="p-4 flex items-center gap-3 border-b border-temple-gold/15">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-temple-gold flex-shrink-0">
+                  <Image src="/images/logo.png" alt="Shri Fragrance" width={40} height={40} className="object-cover" />
+                </div>
+                <div className="overflow-hidden whitespace-nowrap">
+                  <h2 className="text-sm font-bold gold-text tracking-wider">SHRI FRAGRANCE</h2>
+                  <p className="text-[10px] text-temple-cream/40 tracking-widest uppercase">My Account</p>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="ml-auto w-7 h-7 rounded-full bg-temple-gold/20 hover:bg-temple-gold/40 text-temple-gold flex items-center justify-center transition-all"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Mobile User Mini Profile */}
+              <div className="p-4 border-b border-temple-gold/10">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border-2 border-temple-gold/40 flex-shrink-0">
+                    <AvatarFallback className="bg-temple-gold/20 text-temple-gold text-sm font-bold">{userData.avatar}</AvatarFallback>
+                  </Avatar>
+                  <div className="overflow-hidden flex flex-col justify-center">
+                    <p className="text-sm font-semibold text-temple-cream truncate leading-tight">{userData.name}</p>
+                    <Badge className="bg-temple-gold/20 text-temple-amber border-temple-gold/30 text-[9px] px-1.5 py-0 mt-1 w-fit">
+                      <Crown className="h-2.5 w-2.5 mr-0.5" />{userData.membership}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Navigation */}
+              <ScrollArea className="flex-1 py-4">
+                <nav className="space-y-0.5 px-3">
+                  {navItems.map((item, i) => (
+                    <motion.button
+                      key={item.label}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      onClick={() => { setActiveNav(item.label); setMobileMenuOpen(false) }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
+                        activeNav === item.label
+                          ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
+                          : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
+                      }`}
+                    >
+                      {activeNav === item.label && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full" />
+                      )}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-sm font-medium">{item.label}</span>
+                      {item.label === 'Wishlist' && (
+                        <Badge className="ml-auto bg-temple-deep/80 text-white text-[9px] px-1.5 py-0 min-w-[18px] h-[18px]">
+                          {userData.wishlistCount}
+                        </Badge>
+                      )}
+                    </motion.button>
+                  ))}
+                </nav>
+              </ScrollArea>
+
+              {/* Mobile Back to Store */}
+              <div className="p-3 border-t border-temple-gold/15">
+                <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all">
+                    <ArrowLeft className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-sm font-medium">Back to Store</span>
+                  </button>
+                </Link>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ====== MAIN CONTENT ====== */}
       <main className={`flex-1 transition-all duration-300 will-change-[margin-left] ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
