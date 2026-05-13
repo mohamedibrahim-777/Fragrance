@@ -242,8 +242,8 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
   return <div ref={ref}>{count}{suffix}</div>
 }
 
-function ParallaxSection({ children, className = '', speed = 0.3 }: {
-  children: React.ReactNode; className?: string; speed?: number
+function ParallaxSection({ children, className = '', speed = 0.3, id }: {
+  children: React.ReactNode; className?: string; speed?: number; id?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
@@ -252,9 +252,9 @@ function ParallaxSection({ children, className = '', speed = 0.3 }: {
   const y = useTransform(scrollYProgress, [0, 1], [0, speed * -100])
 
   return (
-    <div ref={ref} className={`relative overflow-hidden ${className}`}>
-      <motion.div style={{ y }}>{children}</motion.div>
-    </div>
+    <section ref={ref} id={id} className={`relative overflow-hidden ${className}`}>
+      <motion.div style={{ y }} className="w-full">{children}</motion.div>
+    </section>
   )
 }
 
@@ -371,7 +371,7 @@ export default function Home() {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-5">
               {[
                 { label: 'Home', href: '#home' },
                 { label: 'Collections', href: '#products' },
@@ -527,13 +527,13 @@ export default function Home() {
 
               {/* Stats */}
               <motion.div variants={staggerContainer} initial="hidden" animate="visible"
-                className="flex flex-wrap gap-8">
+                className="flex flex-wrap gap-12">
                 {[
                   { value: 50, suffix: '+', label: 'Sacred Fragrances' },
                   { value: 75, suffix: '+', label: 'Years of Tradition' },
                   { value: 10, suffix: 'K+', label: 'Happy Families' }
                 ].map((stat, i) => (
-                  <motion.div key={i} variants={staggerItem} className="text-center">
+                  <motion.div key={i} variants={staggerItem} className="text-center flex-1 min-w-[80px]">
                     <div className="text-2xl sm:text-3xl font-bold gold-text">
                       <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                     </div>

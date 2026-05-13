@@ -229,14 +229,14 @@ function OrderStatusStep({ step, total = 3 }: { step: number; total?: number }) 
   const steps = ['Ordered', 'Shipped', 'Delivered']
   const icons = [Package, Truck, CheckCircle2]
   return (
-    <div className="flex items-center gap-0 w-full">
+    <div className="flex items-start w-full">
       {steps.map((label, i) => {
         const IconComp = icons[i]
         const isActive = i <= step
         const isCurrent = i === step
         return (
           <div key={label} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center flex-shrink-0">
               <motion.div
                 className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${
                   isActive
@@ -249,12 +249,12 @@ function OrderStatusStep({ step, total = 3 }: { step: number; total?: number }) 
               >
                 <IconComp className="h-3.5 w-3.5" />
               </motion.div>
-              <span className={`text-[9px] mt-1 font-medium ${isActive ? 'text-temple-deep' : 'text-muted-foreground/40'}`}>
+              <span className={`text-[9px] mt-1 font-medium whitespace-nowrap ${isActive ? 'text-temple-deep' : 'text-muted-foreground/40'}`}>
                 {label}
               </span>
             </div>
             {i < total - 1 && (
-              <div className="flex-1 mx-1 -mt-4">
+              <div className="flex-1 mx-1.5 mt-[14px] self-start">
                 <div className="h-0.5 rounded-full bg-temple-gold/20 overflow-hidden">
                   <motion.div
                     className="h-full bg-temple-gold rounded-full"
@@ -459,7 +459,7 @@ export default function UserDashboard() {
       </motion.aside>
 
       {/* ====== MOBILE HEADER ====== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-temple-cream border-b border-temple-gold/20 px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-temple-cream/100 border-b border-temple-gold/20 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full overflow-hidden border border-temple-gold">
             <Image src="/images/logo.png" alt="Logo" width={32} height={32} className="object-cover" />
@@ -474,7 +474,7 @@ export default function UserDashboard() {
       </div>
 
       {/* ====== MAIN CONTENT ====== */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+      <main className={`flex-1 transition-all duration-300 will-change-[margin-left] ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
         {/* Profile Header */}
         <motion.header
           ref={profileRef}
@@ -541,7 +541,7 @@ export default function UserDashboard() {
 
               {/* Quick Stats */}
               <motion.div
-                className="flex sm:flex-col gap-3 sm:gap-3"
+                className="flex sm:flex-col gap-3"
                 variants={staggerContainer}
                 initial="hidden"
                 animate={profileInView ? 'visible' : 'hidden'}
@@ -554,10 +554,10 @@ export default function UserDashboard() {
                   <motion.div
                     key={stat.label}
                     variants={staggerItem}
-                    className="flex items-center gap-2 sm:flex-col sm:items-center bg-temple-gold/10 rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[80px] min-h-[60px]"
+                    className="flex items-center gap-2 sm:flex-col sm:items-center bg-temple-gold/10 rounded-lg px-3 py-2 sm:px-5 sm:py-3 min-w-[80px] sm:min-w-[90px] min-h-[60px] sm:min-h-[68px]"
                     whileHover={{ scale: 1.08, backgroundColor: 'rgba(197,151,46,0.2)' }}
                   >
-                    <stat.icon className="h-4 w-4 text-temple-gold" />
+                    <stat.icon className="h-4 w-4 text-temple-gold flex-shrink-0" />
                     <div className="text-center">
                       <p className="text-lg font-bold text-white leading-tight">{stat.value}</p>
                       <p className="text-[9px] text-temple-cream/50 uppercase tracking-wider">{stat.label}</p>
@@ -578,11 +578,11 @@ export default function UserDashboard() {
               animate={ordersInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl font-bold flex items-center gap-2 leading-none">
+              <h2 className="text-xl font-bold flex items-center gap-2 leading-none self-center">
                 <ShoppingBag className="h-5 w-5 text-temple-gold" />
                 My <span className="gold-text">Orders</span>
               </h2>
-              <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10 self-center">
+              <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">
                 View All <ChevronRight className="h-3 w-3 ml-1" />
               </Button>
             </motion.div>
@@ -628,11 +628,11 @@ export default function UserDashboard() {
                             <div className="w-12 h-12 rounded-lg overflow-hidden border border-temple-gold/15 flex-shrink-0 bg-temple-cream">
                               <Image src={item.image} alt={item.name} width={48} height={48} className="object-cover w-full h-full" />
                             </div>
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                              <p className="text-sm font-medium truncate leading-snug">{item.name}</p>
-                              <p className="text-xs text-muted-foreground leading-snug">Qty: {item.qty}</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.name}</p>
+                              <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
                             </div>
-                            <span className="text-sm font-semibold self-center">₹{item.price.toLocaleString('en-IN')}</span>
+                            <span className="text-sm font-semibold whitespace-nowrap">₹{item.price.toLocaleString('en-IN')}</span>
                           </div>
                         ))}
                       </div>
@@ -644,12 +644,12 @@ export default function UserDashboard() {
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-3 border-t border-temple-gold/10">
-                        <span className="text-base font-bold leading-none">Total: ₹{order.total.toLocaleString('en-IN')}</span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">
+                        <span className="text-base font-bold">Total: ₹{order.total.toLocaleString('en-IN')}</span>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10 h-8">
                             <Truck className="h-3 w-3 mr-1" />Track
                           </Button>
-                          <Button size="sm" className="text-xs bg-temple-gold hover:bg-temple-brass text-white">
+                          <Button size="sm" className="text-xs bg-temple-gold hover:bg-temple-brass text-white h-8">
                             <Sparkles className="h-3 w-3 mr-1" />Reorder
                           </Button>
                         </div>
@@ -807,7 +807,7 @@ export default function UserDashboard() {
                   transition={{ delay: i * 0.12, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileHover={{ y: -8, boxShadow: '0 20px 50px rgba(197,151,46,0.2)' }}
                 >
-                  <Card className="border-temple-gold/20 bg-white overflow-hidden group">
+                  <Card className="border-temple-gold/20 bg-white overflow-hidden group flex flex-col">
                     <div className="relative aspect-square overflow-hidden">
                       <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                       <motion.div
@@ -825,7 +825,7 @@ export default function UserDashboard() {
                         </div>
                       )}
                     </div>
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 flex flex-col flex-1">
                       <h3 className="font-semibold text-sm group-hover:text-temple-gold transition-colors">{item.name}</h3>
                       <div className="flex items-baseline gap-2 mt-1">
                         <span className="text-lg font-bold">₹{item.price}</span>
@@ -836,7 +836,7 @@ export default function UserDashboard() {
                       </div>
                       <Button
                         size="sm"
-                        className={`w-full mt-3 text-xs ${
+                        className={`w-full mt-auto pt-3 text-xs ${
                           item.inStock
                             ? 'bg-temple-gold hover:bg-temple-brass text-white'
                             : 'bg-muted text-muted-foreground cursor-not-allowed'
@@ -925,9 +925,9 @@ export default function UserDashboard() {
                   transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileHover={{ y: -5, boxShadow: '0 15px 40px rgba(197,151,46,0.2)' }}
                 >
-                  <Card className="border-temple-gold/20 bg-white overflow-hidden relative">
+                  <Card className="border-temple-gold/20 bg-white overflow-hidden relative flex flex-col">
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-temple-gold via-temple-amber to-temple-saffron" />
-                    <CardContent className="p-4 pt-5">
+                    <CardContent className="p-4 pt-5 flex flex-col flex-1">
                       <motion.div
                         className={`w-10 h-10 rounded-xl bg-gradient-to-br ${reward.color} text-white flex items-center justify-center mb-3 shadow-md`}
                         whileHover={{ rotate: 5, scale: 1.1 }}
@@ -937,7 +937,7 @@ export default function UserDashboard() {
                       </motion.div>
                       <h3 className="font-semibold text-sm mb-1">{reward.title}</h3>
                       <p className="text-xs text-muted-foreground mb-3">{reward.description}</p>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-auto">
                         <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-xs">
                           <Flame className="h-2.5 w-2.5 mr-0.5" />{reward.points} pts
                         </Badge>

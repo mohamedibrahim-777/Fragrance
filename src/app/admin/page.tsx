@@ -433,7 +433,7 @@ export default function AdminDashboard() {
       </motion.aside>
 
       {/* ====== MOBILE SIDEBAR SHEET ====== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-temple-cream border-b border-temple-gold/20 px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-temple-cream/100 border-b border-temple-gold/20 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-temple-gold/20 flex items-center justify-center">
             <Flame className="h-4 w-4 text-temple-gold" />
@@ -448,7 +448,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* ====== MAIN CONTENT ====== */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+      <main className={`flex-1 transition-all duration-300 will-change-[margin-left] ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
         {/* Header Bar */}
         <motion.header
           className="sticky top-0 z-30 bg-temple-cream/95 backdrop-blur-md border-b border-temple-gold/20 px-4 sm:px-6 lg:px-8 py-4"
@@ -499,9 +499,9 @@ export default function AdminDashboard() {
                 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
-                <Card className="relative overflow-hidden border-temple-gold/20 bg-white hover:border-temple-gold/50 transition-colors cursor-default">
+                <Card className="relative overflow-hidden border-temple-gold/20 bg-white hover:border-temple-gold/50 transition-colors cursor-default min-h-[140px]">
                   <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-temple-gold to-temple-saffron" />
-                  <CardContent className="p-4 sm:p-5 pl-5 sm:pl-6">
+                  <CardContent className="p-4 sm:p-5 pl-5 sm:pl-6 flex flex-col justify-between h-full">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{stat.title}</p>
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="overflow-x-auto">
-                  <Table>
+                  <Table className="min-w-[600px]">
                     <TableHeader>
                       <TableRow className="border-temple-gold/10 hover:bg-transparent">
                         <TableHead className="text-xs font-semibold text-muted-foreground">Order ID</TableHead>
@@ -844,7 +844,7 @@ export default function AdminDashboard() {
                     {quickActions.map((action, i) => (
                       <motion.button
                         key={action.title}
-                        className="group relative flex flex-col items-center justify-center gap-3 p-5 rounded-xl border border-temple-gold/15 bg-gradient-to-br from-temple-cream to-white hover:border-temple-gold/40 transition-all cursor-pointer overflow-hidden"
+                        className="group relative flex flex-col items-center justify-center gap-3 p-5 rounded-xl border border-temple-gold/15 bg-gradient-to-br from-temple-cream to-white hover:border-temple-gold/40 transition-all cursor-pointer overflow-hidden h-full"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={actionsInView ? { opacity: 1, scale: 1 } : {}}
                         transition={{ delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
