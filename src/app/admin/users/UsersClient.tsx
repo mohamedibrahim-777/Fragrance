@@ -59,7 +59,10 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
                           {initial}
                         </span>
-                        <span className="font-semibold text-ink">{u.name}</span>
+                        <div>
+                          <p className="font-semibold text-ink">{u.name}</p>
+                          <p className="font-mono text-[10px] text-ink-muted">{u.id.slice(0, 14)}…</p>
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 pr-3 text-ink-muted">{u.email}</td>

@@ -49,10 +49,10 @@ export default async function AdminDashboard() {
 
       {/* Stats */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Total Revenue" value={formatINR(totalRevenue)} icon={IndianRupee} />
-        <Stat label="Products" value={productCount.toString()} icon={Package} />
-        <Stat label="Orders" value={orderCount.toString()} icon={ShoppingCart} />
-        <Stat label="Active Users" value={customerCount.toString()} icon={Users} />
+        <Stat href="/admin/analytics" label="Total Revenue" value={formatINR(totalRevenue)} icon={IndianRupee} />
+        <Stat href="/admin/products" label="Products" value={productCount.toString()} icon={Package} />
+        <Stat href="/admin/orders" label="Orders" value={orderCount.toString()} icon={ShoppingCart} />
+        <Stat href="/admin/users" label="Active Users" value={customerCount.toString()} icon={Users} />
       </div>
 
       {/* Two-column lower */}
@@ -128,21 +128,29 @@ export default async function AdminDashboard() {
 }
 
 function Stat({
+  href,
   label,
   value,
   icon: Icon,
 }: {
+  href: string;
   label: string;
   value: string;
   icon: typeof Package;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+    <Link
+      href={href}
+      className="group block rounded-2xl border border-border bg-white p-5 shadow-sm transition hover:border-brand hover:shadow-md hover:-translate-y-0.5"
+    >
       <div className="flex items-center justify-between">
-        <p className="text-sm text-ink-muted">{label}</p>
-        <Icon size={18} className="text-ink-muted" />
+        <p className="text-sm text-ink-muted group-hover:text-brand transition-colors">{label}</p>
+        <Icon size={18} className="text-ink-muted group-hover:text-brand transition-colors" />
       </div>
       <p className="mt-3 text-3xl font-extrabold text-ink">{value}</p>
-    </div>
+      <p className="mt-2 text-[11px] uppercase tracking-wider text-ink-muted group-hover:text-brand transition-colors">
+        View details →
+      </p>
+    </Link>
   );
 }
