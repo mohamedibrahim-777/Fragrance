@@ -15,7 +15,7 @@ const SLIDES: Slide[] = [
       "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Incense_at_a_wedding_in_South_India.jpg/1280px-Incense_at_a_wedding_in_South_India.jpg",
     eyebrow: "I — Aarti at Dawn",
     title: "Where smoke meets prayer",
-    text: "Hand-rolled in Madurai. The first stick is lit before the sun touches the gopuram.",
+    text: "Hand-rolled in Salem. The first stick is lit before the sun touches the gopuram.",
   },
   {
     image:

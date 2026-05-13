@@ -51,7 +51,7 @@ export function ProductCard({
 
   if (featured) {
     return (
-      <article className="md:col-span-8 group relative rounded-sm overflow-hidden bronze-card candle-glow flex flex-col md:flex-row h-[500px]">
+      <article className="md:col-span-8 group relative rounded-sm overflow-hidden bronze-card candle-glow lift flex flex-col md:flex-row h-[500px]">
         <Link href={`/products/${slug}`} className="contents">
           <div className="w-full md:w-3/5 h-1/2 md:h-full relative overflow-hidden bg-black">
             <div className="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent z-10 md:bg-gradient-to-r md:from-surface-container-highest md:via-surface-container-highest/50 md:to-transparent opacity-90" />
@@ -102,7 +102,7 @@ export function ProductCard({
   }
 
   return (
-    <article className="md:col-span-4 group relative rounded-sm overflow-hidden bronze-card candle-glow flex flex-col h-[500px]">
+    <article className="md:col-span-4 group relative rounded-sm overflow-hidden bronze-card candle-glow lift flex flex-col h-[500px]">
       <Link href={`/products/${slug}`} className="contents">
         <div className="w-full h-3/5 relative overflow-hidden bg-black border-b border-outline-variant/30">
           <div className="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent z-10 opacity-80" />

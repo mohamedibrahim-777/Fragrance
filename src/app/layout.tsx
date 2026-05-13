@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Noto_Serif, Catamaran } from "next/font/google";
 import { SiteNavbar, SiteFooter, SiteMobileFooter } from "@/components/SiteChrome";
 import { AuthSync } from "@/components/AuthSync";
+import { TempleBackdrop } from "@/components/TempleBackdrop";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -48,8 +49,8 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-on-background font-body-md temple-aura min-h-screen flex flex-col">
-        <div className="temple-aura-bg" aria-hidden="true" />
         <AuthSync />
+        <TempleBackdrop />
         <SiteNavbar />
         <main className="flex-grow">{children}</main>
         <SiteFooter />

@@ -11,7 +11,7 @@ export function StitchFooter() {
         {/* Brand */}
         <div className="md:col-span-1">
           <p className="text-[10px] tracking-[0.55em] text-tertiary/70 uppercase font-headline-md">
-            ✦ Est. Madurai ✦
+            ✦ Est. Salem ✦
           </p>
           <h3 className="mt-1 font-headline-lg text-2xl text-primary tracking-[0.3em] uppercase drop-shadow-[0_1px_8px_rgba(247,189,72,0.2)]">
             SHRI
@@ -61,7 +61,7 @@ export function StitchFooter() {
             <li><Link href="/contact" className="text-on-surface-variant hover:text-tertiary transition-colors">Contact Priest</Link></li>
             <li><a href="mailto:hello@shrifragrance.in" className="text-on-surface-variant hover:text-tertiary transition-colors">hello@shrifragrance.in</a></li>
             <li><span className="text-on-surface-variant">+91 98400 00000</span></li>
-            <li><span className="text-on-surface-variant">Madurai, Tamil Nadu</span></li>
+            <li><span className="text-on-surface-variant">Salem, Tamil Nadu</span></li>
           </ul>
           <div className="mt-4 flex gap-2">
             <a aria-label="Instagram" href="https://instagram.com" target="_blank" rel="noopener" className="brass-medallion !w-9 !h-9">
@@ -83,7 +83,7 @@ export function StitchFooter() {
             © {new Date().getFullYear()} Shri Fragrance. Crafted for the Divine.
           </p>
           <p className="text-tertiary/70 tracking-[0.3em] uppercase">
-            ॐ &nbsp;•&nbsp; Made with devotion in Madurai &nbsp;•&nbsp; ॐ
+            ॐ &nbsp;•&nbsp; Made with devotion in Salem &nbsp;•&nbsp; ॐ
           </p>
         </div>
       </div>

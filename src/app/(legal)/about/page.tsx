@@ -20,7 +20,7 @@ export default function AboutPage() {
         charcoal binders for the natural ingredients of traditional incense. We
         believe a pooja deserves better. Every product we ship is what you
         would buy if you walked into a 60-year-old shop in Mylapore or near
-        Madurai Meenakshi.
+        Salem Meenakshi.
       </p>
     </>
   );

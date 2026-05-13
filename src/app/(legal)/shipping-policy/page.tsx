@@ -3,7 +3,7 @@ export default function ShippingPage() {
     <>
       <h1>Shipping policy</h1>
       <p>
-        We ship pan-India from our warehouse in Madurai, Tamil Nadu. Orders are
+        We ship pan-India from our warehouse in Salem, Tamil Nadu. Orders are
         usually dispatched within 1 business day.
       </p>
       <h2>Delivery times</h2>

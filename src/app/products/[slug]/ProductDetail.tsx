@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCart, useWishlist } from "@/lib/store";
+import { useCart, useWishlist, useAuth } from "@/lib/store";
 import { formatINR } from "@/lib/utils";
 
 type Product = {
@@ -22,6 +22,7 @@ type Product = {
 export function ProductDetail({ product }: { product: Product }) {
   const router = useRouter();
   const add = useCart((s) => s.add);
+  const user = useAuth((s) => s.user);
   const toggleWish = useWishlist((s) => s.toggle);
   const wishItems = useWishlist((s) => s.items);
   const [mounted, setMounted] = useState(false);
@@ -46,8 +47,15 @@ export function ProductDetail({ product }: { product: Product }) {
       },
       qty
     );
-    if (buyNow) router.push("/cart");
-    else {
+    if (buyNow) {
+      if (!user) {
+        router.push("/login?next=/checkout");
+      } else {
+        router.push("/checkout");
+      }
+      return;
+    }
+    {
       setAdded(true);
       setTimeout(() => setAdded(false), 1500);
     }

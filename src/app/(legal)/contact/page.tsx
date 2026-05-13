@@ -15,7 +15,7 @@ export default function ContactPage() {
       <p>
         15, Temple Street
         <br />
-        Madurai, Tamil Nadu 625001
+        Salem, Tamil Nadu 625001
         <br />
         India
       </p>

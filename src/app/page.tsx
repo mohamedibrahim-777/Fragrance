@@ -42,7 +42,7 @@ export default function Home() {
           </p>
           <Link
             href="/products"
-            className="breathe-glow inline-block bg-primary-container border border-tertiary text-on-primary-container px-8 py-4 font-label-sm uppercase tracking-widest hover:shadow-[0_0_28px_rgba(247,189,72,0.55)] transition-shadow duration-300"
+            className="cta-gold inline-block px-10 py-4 text-sm rounded-sm"
           >
             Enter the Divine Experience
           </Link>
@@ -58,7 +58,7 @@ export default function Home() {
               Sacred craft, distilled across generations
             </h2>
             <p className="max-w-2xl mx-auto text-sm md:text-base text-[#5b4416] leading-relaxed">
-              Every stick is hand-rolled in Madurai using heritage recipes —
+              Every stick is hand-rolled in Salem using heritage recipes —
               aged sandalwood, jasmine soaked in dew, and resins blessed by
               temple priests. A ritual you can carry home.
             </p>
@@ -90,7 +90,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
           {/* Card 1 */}
           <ScrollReveal>
-          <div className="filigree-corners bg-surface-container border border-outline-variant/50 p-unit glow-inner">
+          <div className="filigree-corners lift bg-surface-container border border-outline-variant/50 p-unit glow-inner">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="Diya lamp and incense"
@@ -112,7 +112,7 @@ export default function Home() {
           </ScrollReveal>
           {/* Card 2 — offset down */}
           <ScrollReveal delay={150}>
-          <div className="filigree-corners bg-surface-container border border-outline-variant/50 p-unit glow-inner md:-translate-y-8">
+          <div className="filigree-corners lift bg-surface-container border border-outline-variant/50 p-unit glow-inner md:-translate-y-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="Floral offering"
@@ -134,7 +134,7 @@ export default function Home() {
           </ScrollReveal>
           {/* Card 3 */}
           <ScrollReveal delay={300}>
-          <div className="filigree-corners bg-surface-container border border-outline-variant/50 p-unit glow-inner">
+          <div className="filigree-corners lift bg-surface-container border border-outline-variant/50 p-unit glow-inner">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="Temple carving details"
@@ -179,7 +179,7 @@ export default function Home() {
                 <span className="material-symbols-outlined text-6xl">format_quote</span>
               </div>
               <p className="font-headline-md text-headline-md text-on-surface italic mb-4">
-                &quot;A transcendent experience. The sandalwood scent transports me directly to the sanctum of Madurai.&quot;
+                &quot;A transcendent experience. The sandalwood scent transports me directly to the sanctum of Salem.&quot;
               </p>
               <p className="font-label-sm text-tertiary uppercase tracking-widest">
                 — Devotee M.
