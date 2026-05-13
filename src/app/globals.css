@@ -1,0 +1,247 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Custom temple theme colors */
+  --color-temple-gold: #C5972E;
+  --color-temple-saffron: #D4722A;
+  --color-temple-deep: #8B1A1A;
+  --color-temple-maroon: #5C1A1A;
+  --color-temple-cream: #FFF8E7;
+  --color-temple-brass: #B8860B;
+}
+
+:root {
+  --radius: 0.625rem;
+  /* South Indian Temple - Saffron & Gold Theme */
+  --background: #FFF8E7;
+  --foreground: #3D1C00;
+  --card: #FFFDF5;
+  --card-foreground: #3D1C00;
+  --popover: #FFFDF5;
+  --popover-foreground: #3D1C00;
+  --primary: #C5972E;
+  --primary-foreground: #FFFDF5;
+  --secondary: #F5E6C8;
+  --secondary-foreground: #5C1A1A;
+  --muted: #F0E0C0;
+  --muted-foreground: #8B6914;
+  --accent: #D4722A;
+  --accent-foreground: #FFFDF5;
+  --destructive: #B91C1C;
+  --border: #E0C98A;
+  --input: #E0C98A;
+  --ring: #C5972E;
+  --chart-1: #C5972E;
+  --chart-2: #D4722A;
+  --chart-3: #8B1A1A;
+  --chart-4: #B8860B;
+  --chart-5: #5C1A1A;
+  --sidebar: #FFF8E7;
+  --sidebar-foreground: #3D1C00;
+  --sidebar-primary: #C5972E;
+  --sidebar-primary-foreground: #FFFDF5;
+  --sidebar-accent: #F5E6C8;
+  --sidebar-accent-foreground: #3D1C00;
+  --sidebar-border: #E0C98A;
+  --sidebar-ring: #C5972E;
+}
+
+.dark {
+  --background: #1A0E00;
+  --foreground: #F5E6C8;
+  --card: #2A1600;
+  --card-foreground: #F5E6C8;
+  --popover: #2A1600;
+  --popover-foreground: #F5E6C8;
+  --primary: #D4A030;
+  --primary-foreground: #1A0E00;
+  --secondary: #3D1C00;
+  --secondary-foreground: #F5E6C8;
+  --muted: #3D1C00;
+  --muted-foreground: #C5972E;
+  --accent: #E8852A;
+  --accent-foreground: #1A0E00;
+  --destructive: #EF4444;
+  --border: #5C3A1A;
+  --input: #5C3A1A;
+  --ring: #D4A030;
+  --chart-1: #D4A030;
+  --chart-2: #E8852A;
+  --chart-3: #C53030;
+  --chart-4: #B8860B;
+  --chart-5: #8B1A1A;
+  --sidebar: #2A1600;
+  --sidebar-foreground: #F5E6C8;
+  --sidebar-primary: #D4A030;
+  --sidebar-primary-foreground: #1A0E00;
+  --sidebar-accent: #3D1C00;
+  --sidebar-accent-foreground: #F5E6C8;
+  --sidebar-border: #5C3A1A;
+  --sidebar-ring: #D4A030;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom temple-themed decorative elements */
+.temple-border {
+  border-image: repeating-linear-gradient(
+    90deg,
+    #C5972E 0px,
+    #C5972E 8px,
+    #D4722A 8px,
+    #D4722A 16px,
+    #8B1A1A 16px,
+    #8B1A1A 24px
+  ) 4;
+}
+
+.kolam-pattern {
+  background-image: radial-gradient(circle, #C5972E 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.gopuram-shadow {
+  box-shadow: 0 4px 30px rgba(197, 151, 46, 0.3);
+}
+
+.temple-gradient {
+  background: linear-gradient(135deg, #FFF8E7 0%, #F5E6C8 50%, #E0C98A 100%);
+}
+
+.saffron-gradient {
+  background: linear-gradient(135deg, #D4722A 0%, #C5972E 50%, #B8860B 100%);
+}
+
+.deep-maroon-gradient {
+  background: linear-gradient(135deg, #5C1A1A 0%, #8B1A1A 50%, #A02020 100%);
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #C5972E, #FFD700, #C5972E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.temple-divider {
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #C5972E 0px,
+    #C5972E 12px,
+    transparent 12px,
+    transparent 16px,
+    #D4722A 16px,
+    #D4722A 28px,
+    transparent 28px,
+    transparent 32px,
+    #8B1A1A 32px,
+    #8B1A1A 44px,
+    transparent 44px,
+    transparent 48px
+  );
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF8E7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C5972E;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B8860B;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes incense-smoke {
+  0% { opacity: 0.8; transform: translateY(0) scaleX(1); }
+  50% { opacity: 0.4; transform: translateY(-20px) scaleX(1.2); }
+  100% { opacity: 0; transform: translateY(-40px) scaleX(1.5); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(197, 151, 46, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(197, 151, 46, 0.8); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-smoke {
+  animation: incense-smoke 3s ease-out infinite;
+}
+
+.animate-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+}
