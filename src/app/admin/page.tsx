@@ -317,110 +317,356 @@ export default function AdminDashboard() {
     { title: 'View Reports', icon: FileText, color: 'from-temple-brass to-temple-saffron' },
   ]
 
+  // Content for each nav section
+  const navContent: Record<string, React.ReactNode> = {
+    Dashboard: null, // default content rendered below
+    Orders: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-temple-gold" />Order Management</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-muted-foreground">Manage and track all customer orders</p>
+                <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">Export Orders</Button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                {[
+                  { label: 'Pending', value: 12, color: 'text-amber-600 bg-amber-50' },
+                  { label: 'Processing', value: 8, color: 'text-blue-600 bg-blue-50' },
+                  { label: 'Shipped', value: 28, color: 'text-indigo-600 bg-indigo-50' },
+                  { label: 'Delivered', value: 156, color: 'text-green-600 bg-green-50' },
+                ].map((s) => (
+                  <div key={s.label} className={`p-3 rounded-lg ${s.color}`}>
+                    <p className="text-2xl font-bold">{s.value}</p>
+                    <p className="text-xs font-medium uppercase tracking-wider">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[600px]">
+                  <TableHeader>
+                    <TableRow className="border-temple-gold/10 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold">Order ID</TableHead>
+                      <TableHead className="text-xs font-semibold">Customer</TableHead>
+                      <TableHead className="text-xs font-semibold">Product</TableHead>
+                      <TableHead className="text-xs font-semibold">Amount</TableHead>
+                      <TableHead className="text-xs font-semibold">Status</TableHead>
+                      <TableHead className="text-xs font-semibold">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentOrders.map((order) => (
+                      <TableRow key={order.id} className="border-b border-temple-gold/5 hover:bg-temple-gold/5 cursor-default">
+                        <TableCell className="p-3 text-sm font-mono font-semibold text-temple-deep">{order.id}</TableCell>
+                        <TableCell className="p-3">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-7 w-7 border border-temple-gold/20">
+                              <AvatarFallback className="bg-temple-gold/10 text-temple-gold text-[10px] font-bold">{order.avatar}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">{order.customer}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="p-3 text-sm text-muted-foreground">{order.product}</TableCell>
+                        <TableCell className="p-3 text-sm font-semibold">₹{order.amount.toLocaleString('en-IN')}</TableCell>
+                        <TableCell className="p-3"><StatusBadge status={order.status} /></TableCell>
+                        <TableCell className="p-3 text-xs text-muted-foreground">{order.date}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+    Products: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Package className="h-5 w-5 text-temple-gold" />Product Catalog</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-muted-foreground">Manage your incense product inventory</p>
+                <Button className="bg-temple-gold hover:bg-temple-brass text-white text-xs"><Plus className="h-3 w-3 mr-1" />Add Product</Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {topProducts.map((product, i) => (
+                  <Card key={product.name} className="border-temple-gold/10 hover:border-temple-gold/30 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-temple-gold/20 to-temple-saffron/20 flex items-center justify-center">
+                          <span className="text-sm font-bold text-temple-gold">{i + 1}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">{product.unitsSold.toLocaleString('en-IN')} units sold</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-temple-deep">₹{(product.revenue / 1000).toFixed(0)}K revenue</span>
+                        <Badge variant="outline" className="text-xs border-green-200 text-green-700 bg-green-50">Active</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+    Customers: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-temple-gold" />Customer Management</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                {[
+                  { label: 'Total Customers', value: '2,156', color: 'text-temple-deep bg-temple-gold/10' },
+                  { label: 'Active This Month', value: '847', color: 'text-green-600 bg-green-50' },
+                  { label: 'New Signups', value: '124', color: 'text-blue-600 bg-blue-50' },
+                  { label: 'Avg. Order Value', value: '₹578', color: 'text-temple-gold bg-temple-gold/10' },
+                ].map((s) => (
+                  <div key={s.label} className={`p-3 rounded-lg ${s.color}`}>
+                    <p className="text-2xl font-bold">{s.value}</p>
+                    <p className="text-xs font-medium uppercase tracking-wider">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground text-center py-8">Customer details and analytics will appear here</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+    Analytics: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5 text-temple-gold" />Analytics Overview</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyRevenue} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="analyticsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#C5972E" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#D4722A" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0C98A" strokeOpacity={0.3} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8B6914' }} axisLine={{ stroke: '#E0C98A', strokeWidth: 1 }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#8B6914' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `₹${(v / 100000).toFixed(0)}L`} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="revenue" stroke="#C5972E" strokeWidth={2.5} fill="url(#analyticsGradient)" animationDuration={1500} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+    Inventory: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Warehouse className="h-5 w-5 text-temple-gold" />Inventory Management</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-muted-foreground">Track stock levels and manage supplies</p>
+                <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">Update Stock</Button>
+              </div>
+              <div className="space-y-3">
+                {topProducts.map((product) => {
+                  const stockLevel = Math.floor(Math.random() * 80) + 20
+                  return (
+                    <div key={product.name} className="flex items-center gap-4 p-3 rounded-lg border border-temple-gold/10 hover:bg-temple-gold/5 transition-colors">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{product.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 h-2 bg-temple-gold/10 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${stockLevel > 50 ? 'bg-green-500' : stockLevel > 20 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${stockLevel}%` }} />
+                          </div>
+                          <span className="text-xs text-muted-foreground">{stockLevel}%</span>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className={`text-xs ${stockLevel > 50 ? 'border-green-200 text-green-700 bg-green-50' : stockLevel > 20 ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-red-200 text-red-700 bg-red-50'}`}>
+                        {stockLevel > 50 ? 'In Stock' : stockLevel > 20 ? 'Low Stock' : 'Critical'}
+                      </Badge>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+    Settings: (
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="border-temple-gold/20 bg-white">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Settings className="h-5 w-5 text-temple-gold" />Settings</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-temple-deep border-b border-temple-gold/10 pb-2">Store Settings</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className="text-xs font-medium text-muted-foreground">Store Name</label><input type="text" defaultValue="Shri Fragrance" className="mt-1 w-full px-3 py-2 border border-temple-gold/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-temple-gold/30" /></div>
+                  <div><label className="text-xs font-medium text-muted-foreground">Contact Email</label><input type="email" defaultValue="admin@shrifragrance.com" className="mt-1 w-full px-3 py-2 border border-temple-gold/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-temple-gold/30" /></div>
+                </div>
+                <h3 className="text-sm font-semibold text-temple-deep border-b border-temple-gold/10 pb-2 pt-2">Notifications</h3>
+                <div className="space-y-3">
+                  {['Order alerts', 'Low stock warnings', 'Customer messages', 'Weekly reports'].map((setting) => (
+                    <label key={setting} className="flex items-center justify-between p-3 rounded-lg border border-temple-gold/10 hover:bg-temple-gold/5 cursor-pointer">
+                      <span className="text-sm">{setting}</span>
+                      <input type="checkbox" defaultChecked className="accent-temple-gold h-4 w-4" />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button className="bg-temple-gold hover:bg-temple-brass text-white">Save Settings</Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    ),
+  }
+
   return (
     <div className="min-h-screen bg-temple-cream flex">
       {/* ====== SIDEBAR (Desktop) ====== */}
       <motion.aside
-        className={`hidden md:flex flex-col fixed top-0 left-0 h-screen z-40 deep-maroon-gradient border-r border-temple-gold/20 transition-all duration-300 ${
-          sidebarCollapsed ? 'w-[72px]' : 'w-64'
-        }`}
-        initial={{ x: -260 }}
-        animate={{ x: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="hidden md:flex flex-col fixed top-0 left-0 h-screen z-40 deep-maroon-gradient border-r border-temple-gold/20"
+        animate={{ width: sidebarCollapsed ? 72 : 256 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={false}
       >
         {/* Sidebar Header */}
-        <div className="p-4 flex items-center gap-3 border-b border-temple-gold/15">
+        <div className="h-16 flex items-center border-b border-temple-gold/15 px-3">
           <motion.div
-            className="w-10 h-10 rounded-full bg-temple-gold/20 flex items-center justify-center flex-shrink-0"
+            className="w-10 h-10 rounded-full bg-temple-gold/20 flex items-center justify-center flex-shrink-0 cursor-pointer"
             animate={{ boxShadow: ['0 0 5px rgba(197,151,46,0.3)', '0 0 20px rgba(197,151,46,0.6)', '0 0 5px rgba(197,151,46,0.3)'] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <Flame className="h-5 w-5 text-temple-gold" />
           </motion.div>
           <AnimatePresence>
             {!sidebarCollapsed && (
               <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden whitespace-nowrap"
+                className="overflow-hidden whitespace-nowrap ml-3"
               >
                 <h2 className="text-sm font-bold gold-text tracking-wider">SHRI FRAGRANCE</h2>
                 <p className="text-[10px] text-temple-cream/40 tracking-widest uppercase">Admin Panel</p>
               </motion.div>
             )}
           </AnimatePresence>
-          {/* Collapse Toggle - inside sidebar header */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="ml-auto w-7 h-7 rounded-full bg-temple-gold/20 hover:bg-temple-gold/40 text-temple-gold flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
+          {/* Collapse Toggle */}
+          <AnimatePresence>
+            {!sidebarCollapsed && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setSidebarCollapsed(true)}
+                className="ml-auto w-7 h-7 rounded-full bg-temple-gold/20 hover:bg-temple-gold/40 text-temple-gold flex items-center justify-center transition-colors hover:scale-110 flex-shrink-0"
+                title="Collapse sidebar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4">
-          <nav className="space-y-0.5 px-3">
-            {navItems.map((item, i) => (
-              <motion.button
-                key={item.label}
-                custom={i}
-                variants={sidebarItemVariants}
-                initial="hidden"
-                animate="visible"
-                onClick={() => setActiveNav(item.label)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
-                  activeNav === item.label
-                    ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
-                    : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
-                }`}
-                whileHover={{ x: 4, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {activeNav === item.label && (
-                  <motion.div
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full"
-                    layoutId="activeNav"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <item.icon className="h-5 w-5 flex-shrink-0 translate-y-[0.5px]" />
-                <AnimatePresence>
-                  {!sidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
+          <nav className="space-y-0.5 px-2">
+            {navItems.map((item, i) => {
+              const Icon = item.icon
+              const isActive = activeNav === item.label
+              return (
+                <motion.button
+                  key={item.label}
+                  custom={i}
+                  variants={sidebarItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  onClick={() => setActiveNav(item.label)}
+                  title={sidebarCollapsed ? item.label : undefined}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 group relative h-10 ${
+                    isActive
+                      ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
+                      : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isActive && (
+                    <motion.div
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full"
+                      layoutId="activeNavItem"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
                   )}
-                </AnimatePresence>
-              </motion.button>
-            ))}
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                  <AnimatePresence>
+                    {!sidebarCollapsed && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              )
+            })}
           </nav>
         </ScrollArea>
 
+        {/* Expand button when collapsed */}
+        {sidebarCollapsed && (
+          <div className="px-2 pb-2">
+            <motion.button
+              onClick={() => setSidebarCollapsed(false)}
+              className="w-full flex items-center justify-center p-2 rounded-lg bg-temple-gold/10 hover:bg-temple-gold/20 text-temple-gold transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Expand sidebar"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </motion.button>
+          </div>
+        )}
+
         {/* Back to Store */}
-        <div className="p-3 border-t border-temple-gold/15">
+        <div className="p-2 border-t border-temple-gold/15">
           <Link href="/">
             <motion.button
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
-              whileHover={{ x: 4, scale: 1.02 }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-colors"
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <ArrowLeft className="h-5 w-5 flex-shrink-0" />
+              <ArrowLeft className={`h-5 w-5 flex-shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
               <AnimatePresence>
                 {!sidebarCollapsed && (
                   <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
                     className="text-sm font-medium whitespace-nowrap overflow-hidden"
                   >
                     Back to Store
@@ -459,7 +705,7 @@ export default function AdminDashboard() {
               onClick={() => setMobileMenuOpen(false)}
             />
             <motion.aside
-              className="md:hidden fixed top-0 left-0 h-screen w-72 z-50 deep-maroon-gradient border-r border-temple-gold/20"
+              className="md:hidden fixed top-0 left-0 h-screen w-72 z-50 deep-maroon-gradient border-r border-temple-gold/20 flex flex-col"
               initial={{ x: -288 }}
               animate={{ x: 0 }}
               exit={{ x: -288 }}
@@ -485,33 +731,37 @@ export default function AdminDashboard() {
               {/* Mobile Navigation */}
               <ScrollArea className="flex-1 py-4">
                 <nav className="space-y-0.5 px-3">
-                  {navItems.map((item, i) => (
-                    <motion.button
-                      key={item.label}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => { setActiveNav(item.label); setMobileMenuOpen(false) }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
-                        activeNav === item.label
-                          ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
-                          : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
-                      }`}
-                    >
-                      {activeNav === item.label && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full" />
-                      )}
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </motion.button>
-                  ))}
+                  {navItems.map((item, i) => {
+                    const Icon = item.icon
+                    const isActive = activeNav === item.label
+                    return (
+                      <motion.button
+                        key={item.label}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => { setActiveNav(item.label); setMobileMenuOpen(false) }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 group relative h-10 ${
+                          isActive
+                            ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
+                            : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
+                        }`}
+                      >
+                        {isActive && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-temple-gold rounded-r-full" />
+                        )}
+                        <Icon className="h-5 w-5 flex-shrink-0" />
+                        <span className="text-sm font-medium">{item.label}</span>
+                      </motion.button>
+                    )
+                  })}
                 </nav>
               </ScrollArea>
 
               {/* Mobile Back to Store */}
               <div className="p-3 border-t border-temple-gold/15">
                 <Link href="/" onClick={() => setMobileMenuOpen(false)}>
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all">
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-colors">
                     <ArrowLeft className="h-5 w-5 flex-shrink-0" />
                     <span className="text-sm font-medium">Back to Store</span>
                   </button>
@@ -523,7 +773,12 @@ export default function AdminDashboard() {
       </AnimatePresence>
 
       {/* ====== MAIN CONTENT ====== */}
-      <main className={`flex-1 transition-all duration-300 will-change-[margin-left] ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+      <motion.main
+        className="flex-1 will-change-[margin-left]"
+        animate={{ marginLeft: sidebarCollapsed ? 72 : 256 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={false}
+      >
         {/* Header Bar */}
         <motion.header
           className="sticky top-0 z-30 bg-temple-cream/95 backdrop-blur-md border-b border-temple-gold/20 px-4 sm:px-6 lg:px-8 py-4"
@@ -534,9 +789,13 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between pt-12 md:pt-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">
-                <span className="gold-text">Dashboard</span>
+                <span className="gold-text">{activeNav}</span>
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">Welcome back, Admin &mdash; Here&apos;s your overview</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {activeNav === 'Dashboard'
+                  ? "Welcome back, Admin \u2014 Here\u2019s your overview"
+                  : `Manage your ${activeNav.toLowerCase()} section`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex items-center justify-center w-9 h-9">
@@ -555,6 +814,11 @@ export default function AdminDashboard() {
         </motion.header>
 
         <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* ====== CONDITIONAL NAV CONTENT ====== */}
+          {activeNav !== 'Dashboard' && navContent[activeNav] ? (
+            navContent[activeNav]
+          ) : (
+          <>
           {/* ====== STATS CARDS ====== */}
           <motion.div
             ref={statsRef}
@@ -1042,6 +1306,8 @@ export default function AdminDashboard() {
 
           {/* Footer spacer */}
           <div className="h-4" />
+          </>
+          )}
         </div>
 
         {/* Footer */}
@@ -1056,7 +1322,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </footer>
-      </main>
+      </motion.main>
     </div>
   )
 }

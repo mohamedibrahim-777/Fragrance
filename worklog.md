@@ -1,27 +1,32 @@
-
 ---
-Task ID: sidebar-fix
+Task ID: 1
 Agent: Main Agent
-Task: Fix admin and user dashboard sidebar not working
+Task: Fix admin dashboard sidebar not working
 
 Work Log:
-- Identified that the collapse/expand button was positioned at `absolute -right-3` outside the sidebar, making it invisible/unclickable
-- Identified that mobile sidebar had no drawer - just a static header with no navigation access
-- Moved collapse toggle button from outside the sidebar to inside the sidebar header (visible and always accessible)
-- Added hamburger menu icon (Menu/X) to mobile header for both admin and user dashboards
-- Created full mobile drawer sidebar with AnimatePresence for both dashboards:
-  - Overlay backdrop with close-on-click
-  - Animated slide-in from left
-  - Full navigation items with active state
-  - Close button inside drawer header
-  - "Back to Store" link
-- Added `mobileMenuOpen` state and `Menu, X, ChevronLeft` icon imports
-- Added tooltip `title` attribute on collapsed sidebar nav items for usability
-- Build verified successfully
+- Read the uploaded screenshot and analyzed the admin page code at `/home/z/my-project/src/app/admin/page.tsx`
+- Identified multiple bugs in the sidebar:
+  1. **Width overflow when collapsed**: Sidebar was 72px when collapsed but header content needed ~100px (flame icon 40px + collapse button 28px + padding 32px), making the collapse button inaccessible
+  2. **Framer Motion + CSS transition conflict**: `transition-all duration-300` on `motion.aside` conflicted with Framer Motion's `x` position animation
+  3. **No content switching**: Clicking sidebar nav items only changed the highlight but didn't switch the displayed content
+  4. **Mobile sidebar missing flex-col layout**: Mobile drawer didn't have `flex flex-col` for proper height management
+- Fixed sidebar by:
+  - Replacing CSS width transitions with Framer Motion `animate={{ width }}` for smooth, conflict-free animations
+  - Redesigned collapsed state: Flame icon acts as toggle, collapse button only shows when expanded, dedicated expand button shows when collapsed
+  - Added `navContent` map with full pages for Orders, Products, Customers, Analytics, Inventory, and Settings
+  - Added conditional rendering: Dashboard shows original stats/charts, other sections show their respective content
+  - Made header title dynamic based on `activeNav` state
+  - Fixed nav items to use `transition-colors` instead of `transition-all` to avoid animation conflicts
+  - Added `flex flex-col` to mobile aside and used `motion.main` for consistent animation
+- Verified all fixes with browser automation testing:
+  - Sidebar visible and properly rendered
+  - Navigation items clickable and switch content
+  - Collapse/expand toggle works correctly
+  - Collapsed state shows icons only with expand button
+  - Products page shows product catalog grid
+  - Orders page shows order management table
 
 Stage Summary:
-- Admin sidebar collapse/expand now works properly with visible toggle button in header
-- Admin mobile drawer sidebar fully functional with hamburger menu
-- User dashboard sidebar collapse/expand also fixed
-- User dashboard mobile drawer sidebar added
-- All pages build successfully
+- Admin sidebar fully functional with working navigation, collapse/expand, and content switching
+- Build passes successfully
+- All 7 sidebar sections (Dashboard, Orders, Products, Customers, Analytics, Inventory, Settings) now have dedicated content pages
