@@ -6,18 +6,35 @@ import { ProductEditor } from "./ProductEditor";
 
 export const dynamic = "force-dynamic";
 
+function parseFeatures(s: string): string[] {
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function AdminProductEdit({
   params,
 }: {
   params: { id: string };
 }) {
-  const product = await prisma.product.findUnique({
-    where: { id: params.id },
-    include: { category: true },
-  });
+  const [product, categories] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id: params.id },
+      include: { category: true },
+    }),
+    prisma.category.findMany({
+      where: { parentId: { not: null }, isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, slug: true, name: true },
+    }),
+  ]);
   if (!product) notFound();
 
-  const img = parseImages(product.images)[0] ?? "";
+  const images = parseImages(product.images);
+  const features = parseFeatures(product.features);
 
   return (
     <div>
@@ -36,10 +53,13 @@ export default async function AdminProductEdit({
           mrp: product.mrp,
           stock: product.stock,
           isActive: product.isActive,
+          categoryId: product.categoryId,
+          images: images.join("\n"),
+          features: features.join("\n"),
         }}
         sku={product.sku}
-        category={product.category.name}
-        image={img}
+        categories={categories}
+        previewImage={images[0] ?? ""}
       />
     </div>
   );

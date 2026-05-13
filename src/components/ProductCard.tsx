@@ -58,7 +58,7 @@ export function ProductCard({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt={name}
-              className="w-full h-full object-cover group-hover:scale-105 group-hover:opacity-100 transition-all duration-700 opacity-70 mix-blend-luminosity group-hover:mix-blend-normal"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out [transform:translateZ(0)] will-change-transform"
               src={image}
             />
             <div className="absolute inset-0 bg-gradient-to-tr from-secondary-container/10 to-transparent mix-blend-overlay z-10" />
@@ -86,7 +86,7 @@ export function ProductCard({
               </span>
               <button
                 onClick={handleAdd}
-                className="bg-primary-container text-on-primary-container px-6 py-3 rounded-sm font-label-sm text-label-sm uppercase tracking-widest border-t border-l border-error/30 border-b border-r border-black shadow-[inset_0_1px_0_rgba(255,255,255,0.1),_0_4px_10px_rgba(0,0,0,0.5)] hover:bg-error-container hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),_0_0_20px_rgba(181,38,25,0.4)] transition-all flex items-center gap-2 relative overflow-hidden"
+                className="bg-primary-container text-on-primary-container px-6 py-3 rounded-sm font-label-sm text-label-sm uppercase tracking-widest border-t border-l border-error/30 border-b border-r border-black shadow-[inset_0_1px_0_rgba(255,255,255,0.1),_0_4px_10px_rgba(0,0,0,0.5)] hover:bg-error-container hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),_0_0_20px_rgba(181,38,25,0.4)] transition-[background-color,box-shadow] duration-200 flex items-center gap-2 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
                 <span className="relative z-10 flex items-center gap-2">
@@ -109,7 +109,7 @@ export function ProductCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 group-hover:opacity-100 transition-all duration-700 opacity-60 mix-blend-luminosity group-hover:mix-blend-normal"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out [transform:translateZ(0)] will-change-transform"
             src={image}
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-secondary-container/5 to-transparent mix-blend-overlay z-10" />

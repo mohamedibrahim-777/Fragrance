@@ -1,54 +1,67 @@
+"use client";
+
 import Link from "next/link";
 
 export function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-[0_4px_30px_rgba(217,119,7,0.1)]">
-      <div className="flex justify-between items-center px-gutter py-4 max-w-container-max-width mx-auto">
-        <Link
-          href="/"
-          className="font-headline-lg text-headline-lg text-primary tracking-widest uppercase"
-        >
-          SHRI FRAGRANCE
-        </Link>
-
-        <div className="hidden md:flex space-x-gutter">
-          <Link
-            href="/products"
-            className="font-headline-md text-headline-md tracking-tight text-on-surface-variant hover:text-tertiary transition-colors duration-300"
-          >
-            Fragrances
-          </Link>
-          <Link
-            href="/about"
-            className="font-headline-md text-headline-md tracking-tight text-on-surface-variant hover:text-tertiary transition-colors duration-300"
-          >
-            Heritage
-          </Link>
-          <Link
-            href="/products"
-            className="font-headline-md text-headline-md tracking-tight text-on-surface-variant hover:text-tertiary transition-colors duration-300"
-          >
-            Rituals
-          </Link>
-        </div>
-
-        <div className="flex space-x-unit">
-          <Link
-            href="/wishlist"
-            aria-label="Wishlist"
-            className="text-tertiary hover:text-secondary-fixed-dim transition-all duration-300"
-          >
-            <span className="material-symbols-outlined">favorite</span>
-          </Link>
-          <Link
-            href="/cart"
-            aria-label="Cart"
-            className="text-tertiary hover:text-secondary-fixed-dim transition-all duration-300"
-          >
-            <span className="material-symbols-outlined">shopping_bag</span>
-          </Link>
-        </div>
+    <header className="fixed top-0 left-0 w-full z-50">
+      {/* Top mantra ribbon */}
+      <div className="mantra-ribbon">
+        ॐ &nbsp;•&nbsp; Handcrafted Temple Agarbatti &nbsp;•&nbsp; Free Shipping over ₹999 &nbsp;•&nbsp; ॐ
       </div>
-    </nav>
+
+      {/* Main nav */}
+      <nav className="bg-surface/85 backdrop-blur-md border-b border-outline-variant/30 shadow-[0_4px_30px_rgba(217,119,7,0.12)]">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center px-gutter py-3 max-w-container-max-width mx-auto gap-6">
+          {/* Left nav */}
+          <div className="hidden md:flex items-center gap-7 justify-end">
+            <Link href="/products" className="nav-link font-headline-md text-sm tracking-[0.25em] uppercase text-on-surface-variant hover:text-tertiary transition-colors duration-300">
+              All Products
+            </Link>
+            <Link href="/products?cat=agarbatti-sandalwood" className="nav-link font-headline-md text-sm tracking-[0.25em] uppercase text-on-surface-variant hover:text-tertiary transition-colors duration-300">
+              Fragrances
+            </Link>
+            <Link href="/about" className="nav-link font-headline-md text-sm tracking-[0.25em] uppercase text-on-surface-variant hover:text-tertiary transition-colors duration-300">
+              Heritage
+            </Link>
+            <Link href="/collections/agarbatti-temple" className="nav-link font-headline-md text-sm tracking-[0.25em] uppercase text-on-surface-variant hover:text-tertiary transition-colors duration-300">
+              Rituals
+            </Link>
+          </div>
+
+          {/* Centered brand emblem */}
+          <Link href="/" className="flex flex-col items-center group" aria-label="Shri Fragrance — home">
+            <span className="text-[10px] tracking-[0.55em] text-tertiary/70 uppercase font-headline-md">
+              ✦ Est. Madurai ✦
+            </span>
+            <span className="font-headline-lg text-2xl md:text-3xl text-primary tracking-[0.35em] uppercase mt-0.5 drop-shadow-[0_1px_8px_rgba(247,189,72,0.25)]">
+              SHRI
+            </span>
+            <span className="-mt-0.5 text-[10px] tracking-[0.55em] text-tertiary/70 uppercase font-headline-md">
+              Fragrance
+            </span>
+          </Link>
+
+          {/* Right utility */}
+          <div className="flex items-center gap-3 justify-start md:justify-end">
+            <Link href="/search" aria-label="Search" className="brass-medallion md:flex hidden">
+              <span className="material-symbols-outlined text-[18px]">search</span>
+            </Link>
+            <Link href="/wishlist" aria-label="Wishlist" className="brass-medallion">
+              <span className="material-symbols-outlined text-[18px]">favorite</span>
+            </Link>
+            <Link href="/cart" aria-label="Cart" className="brass-medallion">
+              <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+            </Link>
+            <Link href="/profile" aria-label="Profile" className="brass-medallion">
+              <span className="material-symbols-outlined text-[18px]">person</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom gold hairline */}
+        <div className="h-px bg-gradient-to-r from-transparent via-tertiary/40 to-transparent" />
+      </nav>
+    </header>
   );
 }

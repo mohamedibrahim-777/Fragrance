@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Noto_Serif, Catamaran } from "next/font/google";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { StitchFooter } from "@/components/StitchFooter";
+import { SiteNavbar, SiteFooter, SiteMobileFooter } from "@/components/SiteChrome";
 import { AuthSync } from "@/components/AuthSync";
 import "./globals.css";
 
@@ -49,12 +47,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
       </head>
-      <body className="bg-background text-on-background font-body-md texture-bg min-h-screen flex flex-col">
+      <body className="bg-background text-on-background font-body-md temple-aura min-h-screen flex flex-col">
+        <div className="temple-aura-bg" aria-hidden="true" />
         <AuthSync />
-        <Navbar />
+        <SiteNavbar />
         <main className="flex-grow">{children}</main>
-        <StitchFooter />
-        <Footer />
+        <SiteFooter />
+        <SiteMobileFooter />
       </body>
     </html>
   );

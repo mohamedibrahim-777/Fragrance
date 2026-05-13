@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/store";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") ?? "/";
@@ -72,7 +80,7 @@ export default function LoginPage() {
         <strong className="text-ink">Demo accounts</strong>
         <ul className="mt-1 space-y-0.5">
           <li><code>customer@shri.local</code> / <code>customer123</code></li>
-          <li><code>admin@shri.local</code> / <code>admin123</code></li>
+          <li><code>admin@shri.com</code> / <code>admin@1234</code></li>
         </ul>
       </div>
     </div>

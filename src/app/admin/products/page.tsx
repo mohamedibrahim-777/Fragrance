@@ -5,17 +5,24 @@ import { Pencil } from "lucide-react";
 import {
   RefreshButton,
   ExportButton,
-  AddProductButton,
   DeleteRowButton,
 } from "../_components/AdminButtons";
+import { AddProductDialog } from "./AddProductDialog";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProducts() {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { category: true },
-  });
+  const [products, categories] = await Promise.all([
+    prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { category: true },
+    }),
+    prisma.category.findMany({
+      where: { parentId: { not: null }, isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, slug: true, name: true },
+    }),
+  ]);
 
   return (
     <>
@@ -23,7 +30,7 @@ export default async function AdminProducts() {
         <h1 className="text-3xl font-extrabold text-ink">Products</h1>
         <div className="flex gap-2">
           <RefreshButton />
-          <AddProductButton />
+          <AddProductDialog categories={categories} />
         </div>
       </div>
 

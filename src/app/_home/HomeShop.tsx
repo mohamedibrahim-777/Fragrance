@@ -15,12 +15,6 @@ type Item = {
   categorySlug: string;
 };
 
-const BADGES: Record<number, "Bestseller" | "Organic" | "New" | null> = {
-  0: "Bestseller",
-  1: "Organic",
-  2: "New",
-};
-
 export function HomeShop({
   categories,
   products,
@@ -71,7 +65,7 @@ export function HomeShop({
           </p>
         ) : (
           <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {top.map((p, i) => (
+            {top.map((p) => (
               <ProductCard
                 key={p.id}
                 productId={p.id}

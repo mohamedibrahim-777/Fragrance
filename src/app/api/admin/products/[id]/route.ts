@@ -28,6 +28,19 @@ export async function PATCH(
   if (typeof body.isActive === "boolean") data.isActive = body.isActive;
   if (typeof body.name === "string") data.name = body.name;
   if (typeof body.description === "string") data.description = body.description;
+  if (typeof body.categoryId === "string" && body.categoryId.length > 0) {
+    data.categoryId = body.categoryId;
+  }
+  if (Array.isArray(body.images)) {
+    data.images = JSON.stringify(
+      body.images.filter((s: unknown) => typeof s === "string" && (s as string).trim()).map((s: string) => s.trim())
+    );
+  }
+  if (Array.isArray(body.features)) {
+    data.features = JSON.stringify(
+      body.features.filter((s: unknown) => typeof s === "string" && (s as string).trim()).map((s: string) => s.trim())
+    );
+  }
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
