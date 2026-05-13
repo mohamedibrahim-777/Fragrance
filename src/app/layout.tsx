@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Divya Dhoop - Sacred South Indian Agarbathi & Pooja Essentials",
+  title: "Shri Fragrance - Sacred South Indian Agarbathi & Pooja Essentials",
   description: "Premium handcrafted agarbathi and traditional pooja essentials inspired by South Indian Hindu temples. Sandalwood, jasmine, nag champa and more.",
-  keywords: ["agarbathi", "incense", "pooja", "South Indian", "temple", "sandalwood", "nag champa", "divya dhoop"],
-  authors: [{ name: "Divya Dhoop" }],
+  keywords: ["agarbathi", "incense", "pooja", "South Indian", "temple", "sandalwood", "nag champa", "shri fragrance"],
+  authors: [{ name: "Shri Fragrance" }],
   icons: {
     icon: "/images/logo.png",
   },
