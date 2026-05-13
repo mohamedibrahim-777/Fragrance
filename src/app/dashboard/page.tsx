@@ -641,7 +641,7 @@ export default function UserDashboard() {
                   <div className="relative">
                     <input type="checkbox" checked={notifSettings[setting.key]} onChange={() => handleToggleNotif(setting.key)} className="sr-only" />
                     <div className={`w-10 h-5 rounded-full transition-colors duration-200 ${notifSettings[setting.key] ? 'bg-temple-gold' : 'bg-muted'}`} onClick={() => handleToggleNotif(setting.key)}>
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 mt-0.5 ${notifSettings[setting.key] ? 'translate-x-5.5 ml-[22px]' : 'ml-0.5'}`} />
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 mt-0.5 ${notifSettings[setting.key] ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
                     </div>
                   </div>
                 </label>
@@ -855,7 +855,7 @@ export default function UserDashboard() {
           <div className="relative px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pt-20 md:pt-10">
             <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-6">
               <div className="relative">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-3 border-temple-gold divine-glow flex items-center justify-center bg-temple-gold/20 flex-shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-[3px] border-temple-gold divine-glow flex items-center justify-center bg-temple-gold/20 flex-shrink-0">
                   <span className="text-2xl sm:text-3xl font-bold text-temple-gold">{initialUserData.avatar}</span>
                 </div>
                 <div className="absolute -bottom-1 -right-1 bg-temple-amber text-temple-maroon rounded-full px-2 py-0.5 text-[9px] font-bold border-2 border-temple-maroon">GOLD</div>

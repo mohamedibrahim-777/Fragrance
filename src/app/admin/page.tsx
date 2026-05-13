@@ -12,10 +12,7 @@ import {
   Plus, Bell, FileText, ChevronLeft, ChevronRight,
   Flame, Sparkles, CircleDot, Menu, X
 } from 'lucide-react'
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar,
-} from 'recharts'
+// Recharts removed — using lightweight SVG/CSS charts
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -177,14 +174,171 @@ function Sparkline({ data, color = '#C5972E', width = 80, height = 32 }: {
   )
 }
 
-// ====== CUSTOM TOOLTIP FOR RECHARTS ======
+// ====== REVENUE AREA CHART (Pure SVG) ======
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
-  if (!active || !payload || !payload.length) return null
+function RevenueAreaChart({ data, height = 300 }: { data: typeof monthlyRevenue; height?: number }) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const padding = { top: 10, right: 10, bottom: 30, left: 50 }
+  const chartW = 600
+  const chartH = height
+  const innerW = chartW - padding.left - padding.right
+  const innerH = chartH - padding.top - padding.bottom
+
+  const maxRev = Math.max(...data.map(d => d.revenue))
+  const minRev = 0
+  const range = maxRev - minRev || 1
+
+  const points = data.map((d, i) => ({
+    x: padding.left + (i / (data.length - 1)) * innerW,
+    y: padding.top + innerH - ((d.revenue - minRev) / range) * innerH,
+    ...d,
+  }))
+
+  // Build smooth path using monotone cubic interpolation
+  const linePath = points.map((p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`
+    const prev = points[i - 1]
+    const cpx1 = prev.x + (p.x - prev.x) / 3
+    const cpx2 = p.x - (p.x - prev.x) / 3
+    return `C ${cpx1} ${prev.y} ${cpx2} ${p.y} ${p.x} ${p.y}`
+  }).join(' ')
+
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + innerH} L ${points[0].x} ${padding.top + innerH} Z`
+
+  // Grid lines (5 horizontal)
+  const gridLines = Array.from({ length: 5 }, (_, i) => {
+    const y = padding.top + (i / 4) * innerH
+    const val = maxRev - (i / 4) * range
+    return { y, label: `₹${(val / 100000).toFixed(0)}L` }
+  })
+
   return (
-    <div className="bg-temple-maroon text-temple-cream px-4 py-3 rounded-lg shadow-xl border border-temple-gold/30">
-      <p className="text-xs text-temple-gold font-medium mb-1">{label}</p>
-      <p className="text-sm font-bold">₹{payload[0].value.toLocaleString('en-IN')}</p>
+    <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="revenueAreaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#C5972E" stopOpacity={0.4} />
+          <stop offset="50%" stopColor="#D4722A" stopOpacity={0.15} />
+          <stop offset="100%" stopColor="#D4722A" stopOpacity={0.02} />
+        </linearGradient>
+      </defs>
+      {/* Grid lines */}
+      {gridLines.map((g, i) => (
+        <g key={i}>
+          <line x1={padding.left} y1={g.y} x2={padding.left + innerW} y2={g.y} stroke="#E0C98A" strokeOpacity={0.3} strokeDasharray="3 3" />
+          <text x={padding.left - 6} y={g.y + 4} textAnchor="end" fontSize="11" fill="#8B6914">{g.label}</text>
+        </g>
+      ))}
+      {/* Area fill */}
+      <path d={areaPath} fill="url(#revenueAreaGrad)" />
+      {/* Line */}
+      <path d={linePath} fill="none" stroke="#C5972E" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      {/* Data points and X labels */}
+      {points.map((p, i) => (
+        <g key={i}
+          onMouseEnter={() => setHoveredIndex(i)}
+          onMouseLeave={() => setHoveredIndex(null)}
+          style={{ cursor: 'pointer' }}
+        >
+          {/* Invisible hit area */}
+          <circle cx={p.x} cy={p.y} r={14} fill="transparent" />
+          {/* Visible dot */}
+          <circle cx={p.x} cy={p.y} r={hoveredIndex === i ? 5 : 3} fill="#C5972E" stroke="#fff" strokeWidth={2} style={{ transition: 'r 0.2s' }} />
+          {/* X axis label */}
+          <text x={p.x} y={padding.top + innerH + 18} textAnchor="middle" fontSize="12" fill="#8B6914">{p.month}</text>
+          {/* Tooltip */}
+          {hoveredIndex === i && (
+            <g>
+              <rect x={p.x - 52} y={p.y - 42} width={104} height={34} rx={6} fill="#5C1A1A" stroke="rgba(197,151,46,0.3)" strokeWidth={1} />
+              <text x={p.x} y={p.y - 26} textAnchor="middle" fontSize="10" fill="#C5972E" fontWeight="600">{p.month}</text>
+              <text x={p.x} y={p.y - 14} textAnchor="middle" fontSize="12" fill="#FFF8E7" fontWeight="bold">₹{p.revenue.toLocaleString('en-IN')}</text>
+            </g>
+          )}
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+// ====== ORDER STATUS DONUT (Pure SVG) ======
+
+function OrderStatusDonut({ data }: { data: typeof orderStatusData }) {
+  const size = 200
+  const cx = size / 2
+  const cy = size / 2
+  const outerR = 85
+  const innerR = 55
+  const gap = 3 // degrees between segments
+  const total = data.reduce((s, d) => s + d.value, 0)
+
+  // Pre-compute cumulative angles without mutation during render
+  const cumulativeAngles = data.reduce<number[]>((acc, d, i) => {
+    const prev = i === 0 ? -90 : acc[i - 1]
+    acc.push(prev + (d.value / total) * 360)
+    return acc
+  }, [])
+
+  const segments = data.map((d, i) => {
+    const prevAngle = i === 0 ? -90 : cumulativeAngles[i - 1]
+    const angle = (d.value / total) * 360 - gap
+    const startAngle = prevAngle + gap / 2
+    const endAngle = startAngle + angle
+
+    const startRad = (startAngle * Math.PI) / 180
+    const endRad = (endAngle * Math.PI) / 180
+
+    const x1Outer = cx + outerR * Math.cos(startRad)
+    const y1Outer = cy + outerR * Math.sin(startRad)
+    const x2Outer = cx + outerR * Math.cos(endRad)
+    const y2Outer = cy + outerR * Math.sin(endRad)
+    const x1Inner = cx + innerR * Math.cos(endRad)
+    const y1Inner = cy + innerR * Math.sin(endRad)
+    const x2Inner = cx + innerR * Math.cos(startRad)
+    const y2Inner = cy + innerR * Math.sin(startRad)
+
+    const largeArc = angle > 180 ? 1 : 0
+
+    const pathD = [
+      `M ${x1Outer} ${y1Outer}`,
+      `A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2Outer} ${y2Outer}`,
+      `L ${x1Inner} ${y1Inner}`,
+      `A ${innerR} ${innerR} 0 ${largeArc} 0 ${x2Inner} ${y2Inner}`,
+      'Z',
+    ].join(' ')
+
+    return { ...d, pathD }
+  })
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      {segments.map((seg, i) => (
+        <path key={i} d={seg.pathD} fill={seg.color} style={{ transition: 'opacity 0.2s' }} opacity={0.9} />
+      ))}
+    </svg>
+  )
+}
+
+// ====== SIMPLE PRODUCT BAR CHART (Pure CSS) ======
+
+function SimpleProductBarChart({ data }: { data: typeof topProducts }) {
+  const maxUnits = Math.max(...data.map(d => d.unitsSold))
+  const shortNames = ['Chandanam', 'Nag Champa', 'Malligai', 'Roja', 'Sambrani']
+  return (
+    <div className="flex items-end gap-3 sm:gap-5 h-[200px] sm:h-[220px] w-full px-2 pt-6 pb-2">
+      {data.map((item, i) => {
+        const heightPct = maxUnits > 0 ? (item.unitsSold / maxUnits) * 100 : 0
+        return (
+          <div key={item.name} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-temple-maroon text-temple-cream px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-lg border border-temple-gold/30">
+              {item.unitsSold.toLocaleString('en-IN')} units
+            </div>
+            <div
+              className="w-full max-w-[48px] rounded-t-md bg-gradient-to-t from-temple-saffron/80 to-temple-gold transition-all duration-500 group-hover:from-temple-saffron group-hover:to-temple-amber min-h-[4px]"
+              style={{ height: `${heightPct}%` }}
+            />
+            <span className="text-[10px] sm:text-xs mt-2 text-muted-foreground font-medium text-center leading-tight">{shortNames[i] || item.name}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -449,21 +603,7 @@ export default function AdminDashboard() {
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5 text-temple-gold" />Analytics Overview</CardTitle></CardHeader>
             <CardContent>
               <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyRevenue} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="analyticsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#C5972E" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#D4722A" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E0C98A" strokeOpacity={0.3} />
-                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8B6914' }} axisLine={{ stroke: '#E0C98A', strokeWidth: 1 }} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#8B6914' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `₹${(v / 100000).toFixed(0)}L`} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="revenue" stroke="#C5972E" strokeWidth={2.5} fill="url(#analyticsGradient)" animationDuration={1500} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <RevenueAreaChart data={monthlyRevenue} height={400} />
               </div>
             </CardContent>
           </Card>
@@ -930,40 +1070,7 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="h-[300px] sm:h-[340px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={monthlyRevenue} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#C5972E" stopOpacity={0.4} />
-                            <stop offset="50%" stopColor="#D4722A" stopOpacity={0.15} />
-                            <stop offset="100%" stopColor="#D4722A" stopOpacity={0.02} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E0C98A" strokeOpacity={0.3} />
-                        <XAxis
-                          dataKey="month"
-                          tick={{ fontSize: 12, fill: '#8B6914' }}
-                          axisLine={{ stroke: '#E0C98A', strokeWidth: 1 }}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fontSize: 11, fill: '#8B6914' }}
-                          axisLine={false}
-                          tickLine={false}
-                          tickFormatter={(v: number) => `₹${(v / 100000).toFixed(0)}L`}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="#C5972E"
-                          strokeWidth={2.5}
-                          fill="url(#revenueGradient)"
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <RevenueAreaChart data={monthlyRevenue} height={340} />
                   </div>
                 </CardContent>
               </Card>
@@ -986,26 +1093,7 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="pt-0 flex flex-col items-center">
                   <div className="relative h-[200px] w-[200px] sm:h-[220px] sm:w-[220px] mx-auto">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={orderStatusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={55}
-                          outerRadius={85}
-                          paddingAngle={3}
-                          dataKey="value"
-                          animationDuration={1200}
-                          animationEasing="ease-out"
-                          stroke="none"
-                        >
-                          {orderStatusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <OrderStatusDonut data={orderStatusData} />
                     {/* Center text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                       <p className="text-2xl font-bold text-foreground">3,847</p>
@@ -1256,49 +1344,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="h-[260px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={topProducts} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#C5972E" stopOpacity={0.9} />
-                          <stop offset="100%" stopColor="#D4722A" stopOpacity={0.7} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E0C98A" strokeOpacity={0.2} />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 10, fill: '#8B6914' }}
-                        axisLine={{ stroke: '#E0C98A', strokeWidth: 1 }}
-                        tickLine={false}
-                        interval={0}
-                        angle={-15}
-                        textAnchor="end"
-                        height={50}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: '#8B6914' }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#5C1A1A',
-                          border: '1px solid rgba(197,151,46,0.3)',
-                          borderRadius: '8px',
-                          color: '#FFF8E7',
-                          fontSize: '12px',
-                        }}
-                        formatter={(value: number) => [`${value.toLocaleString('en-IN')} units`, 'Sold']}
-                      />
-                      <Bar
-                        dataKey="unitsSold"
-                        fill="url(#barGradient)"
-                        radius={[6, 6, 0, 0]}
-                        animationDuration={1200}
-                        animationEasing="ease-out"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <SimpleProductBarChart data={topProducts} />
                 </div>
               </CardContent>
             </Card>
