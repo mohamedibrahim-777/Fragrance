@@ -354,7 +354,7 @@ export default function AdminDashboard() {
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4">
-          <nav className="space-y-1 px-3">
+          <nav className="space-y-0.5 px-3">
             {navItems.map((item, i) => (
               <motion.button
                 key={item.label}
@@ -363,7 +363,7 @@ export default function AdminDashboard() {
                 initial="hidden"
                 animate="visible"
                 onClick={() => setActiveNav(item.label)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
                   activeNav === item.label
                     ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
                     : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
@@ -378,7 +378,7 @@ export default function AdminDashboard() {
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-5 w-5 flex-shrink-0 translate-y-[0.5px]" />
                 <AnimatePresence>
                   {!sidebarCollapsed && (
                     <motion.span
@@ -401,7 +401,7 @@ export default function AdminDashboard() {
           <motion.div custom={7} variants={sidebarItemVariants} initial="hidden" animate="visible">
             <Link href="/">
               <motion.button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
                 whileHover={{ x: 4, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -456,23 +456,25 @@ export default function AdminDashboard() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <div className="flex items-center justify-between">
-            <div className="mt-10 md:mt-0">
+          <div className="flex items-center justify-between pt-12 md:pt-0">
+            <div>
               <h1 className="text-xl sm:text-2xl font-bold">
                 <span className="gold-text">Dashboard</span>
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">Welcome back, Admin &mdash; Here&apos;s your overview</p>
             </div>
             <div className="flex items-center gap-3">
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex items-center justify-center w-9 h-9">
                 <Button variant="outline" size="icon" className="border-temple-gold/30 h-9 w-9 relative">
                   <Bell className="h-4 w-4" />
                   <span className="absolute -top-1 -right-1 h-3 w-3 bg-temple-deep rounded-full border-2 border-temple-cream" />
                 </Button>
               </motion.div>
-              <Avatar className="h-9 w-9 border-2 border-temple-gold/40">
-                <AvatarFallback className="bg-temple-gold/20 text-temple-gold text-xs font-bold">SF</AvatarFallback>
-              </Avatar>
+              <div className="flex items-center justify-center w-9 h-9">
+                <Avatar className="h-9 w-9 border-2 border-temple-gold/40">
+                  <AvatarFallback className="bg-temple-gold/20 text-temple-gold text-xs font-bold">SF</AvatarFallback>
+                </Avatar>
+              </div>
             </div>
           </div>
         </motion.header>
@@ -574,7 +576,7 @@ export default function AdminDashboard() {
             >
               <Card className="border-temple-gold/20 bg-white overflow-hidden">
                 <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-temple-gold" />
@@ -582,7 +584,7 @@ export default function AdminDashboard() {
                       </CardTitle>
                       <p className="text-xs text-muted-foreground mt-1">Monthly revenue over the last 12 months</p>
                     </div>
-                    <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-xs">
+                    <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 text-xs mt-1">
                       <Sparkles className="h-3 w-3 mr-1" />Live
                     </Badge>
                   </div>

@@ -382,7 +382,7 @@ export default function Home() {
                 { label: 'Admin', href: '/admin', icon: Shield }
               ].map(item => (
                 <Link key={item.label} href={item.href}
-                  className="flex items-center gap-1.5 text-sm font-medium text-temple-deep hover:text-temple-saffron transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-medium text-temple-deep hover:text-temple-saffron transition-colors h-9"
                 >
                   {item.icon && <item.icon className="w-4 h-4" />}
                   {item.label}
@@ -410,11 +410,11 @@ export default function Home() {
                 )}
               </AnimatePresence>
               <Button variant="ghost" size="icon" onClick={() => setShowSearch(!showSearch)}
-                className="text-temple-deep hover:text-temple-saffron">
+                className="text-temple-deep hover:text-temple-saffron h-9 w-9">
                 <Search className="w-5 h-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)}
-                className="relative text-temple-deep hover:text-temple-saffron">
+                className="relative text-temple-deep hover:text-temple-saffron h-9 w-9">
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-temple-saffron text-white text-[10px]">
@@ -508,7 +508,7 @@ export default function Home() {
 
               <motion.div variants={fadeInUp} initial="hidden" animate="visible"
                 transition={{ delay: 0.5 }}
-                className="flex flex-wrap gap-4 mb-12">
+                className="flex flex-wrap items-center gap-4 mb-12">
                 <Button asChild size="lg"
                   className="saffron-gradient text-white hover:opacity-90 px-8 py-6 text-base font-semibold shadow-lg">
                   <a href="#products">
@@ -1190,7 +1190,7 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-8 right-8 z-50"
           >
             <Button
               onClick={scrollToTop}

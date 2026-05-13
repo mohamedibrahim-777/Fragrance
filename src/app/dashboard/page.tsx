@@ -360,12 +360,12 @@ export default function UserDashboard() {
             transition={{ delay: 0.3 }}
           >
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-temple-gold/40">
+              <Avatar className="h-10 w-10 border-2 border-temple-gold/40 flex-shrink-0">
                 <AvatarFallback className="bg-temple-gold/20 text-temple-gold text-sm font-bold">{userData.avatar}</AvatarFallback>
               </Avatar>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-temple-cream truncate">{userData.name}</p>
-                <Badge className="bg-temple-gold/20 text-temple-amber border-temple-gold/30 text-[9px] px-1.5 py-0">
+              <div className="overflow-hidden flex flex-col justify-center">
+                <p className="text-sm font-semibold text-temple-cream truncate leading-tight">{userData.name}</p>
+                <Badge className="bg-temple-gold/20 text-temple-amber border-temple-gold/30 text-[9px] px-1.5 py-0 mt-1 w-fit">
                   <Crown className="h-2.5 w-2.5 mr-0.5" />{userData.membership}
                 </Badge>
               </div>
@@ -375,7 +375,7 @@ export default function UserDashboard() {
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4">
-          <nav className="space-y-1 px-3">
+          <nav className="space-y-0.5 px-3">
             {navItems.map((item, i) => (
               <motion.button
                 key={item.label}
@@ -384,7 +384,7 @@ export default function UserDashboard() {
                 initial="hidden"
                 animate="visible"
                 onClick={() => setActiveNav(item.label)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative h-10 ${
                   activeNav === item.label
                     ? 'bg-temple-gold/20 text-temple-gold shadow-lg shadow-temple-gold/10'
                     : 'text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream'
@@ -399,7 +399,7 @@ export default function UserDashboard() {
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-5 w-5 flex-shrink-0 translate-y-[0.5px]" />
                 <AnimatePresence>
                   {!sidebarCollapsed && (
                     <motion.span
@@ -427,7 +427,7 @@ export default function UserDashboard() {
           <motion.div custom={6} variants={sidebarItemVariants} initial="hidden" animate="visible">
             <Link href="/">
               <motion.button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg h-10 text-temple-cream/60 hover:bg-temple-gold/10 hover:text-temple-cream transition-all"
                 whileHover={{ x: 4, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -485,7 +485,7 @@ export default function UserDashboard() {
         >
           <div className="absolute inset-0 royal-gradient opacity-90" />
           <div className="absolute inset-0 rangoli-dots opacity-[0.04]" />
-          <div className="relative px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mt-10 md:mt-0">
+          <div className="relative px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pt-20 md:pt-10">
             <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-6">
               {/* Avatar */}
               <motion.div
@@ -494,7 +494,7 @@ export default function UserDashboard() {
                 animate={profileInView ? { scale: 1, opacity: 1 } : {}}
                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-3 border-temple-gold divine-glow flex items-center justify-center bg-temple-gold/20">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-3 border-temple-gold divine-glow flex items-center justify-center bg-temple-gold/20 flex-shrink-0">
                   <span className="text-2xl sm:text-3xl font-bold text-temple-gold">{userData.avatar}</span>
                 </div>
                 <motion.div
@@ -507,9 +507,9 @@ export default function UserDashboard() {
               </motion.div>
 
               {/* Greeting & Info */}
-              <div className="text-center sm:text-left flex-1">
+              <div className="text-center sm:text-left flex-1 min-w-0">
                 <motion.h1
-                  className="text-2xl sm:text-3xl font-bold text-white"
+                  className="text-2xl sm:text-3xl font-bold text-white leading-tight"
                   initial={{ opacity: 0, y: 20 }}
                   animate={profileInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.3 }}
@@ -525,7 +525,7 @@ export default function UserDashboard() {
                   {userData.email} · Member since {userData.memberSince}
                 </motion.p>
                 <motion.div
-                  className="flex items-center gap-3 mt-3 justify-center sm:justify-start"
+                  className="flex items-center gap-3 mt-3 justify-center sm:justify-start flex-wrap"
                   initial={{ opacity: 0, y: 10 }}
                   animate={profileInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.5 }}
@@ -541,7 +541,7 @@ export default function UserDashboard() {
 
               {/* Quick Stats */}
               <motion.div
-                className="flex sm:flex-col gap-4 sm:gap-3"
+                className="flex sm:flex-col gap-3 sm:gap-3"
                 variants={staggerContainer}
                 initial="hidden"
                 animate={profileInView ? 'visible' : 'hidden'}
@@ -554,7 +554,7 @@ export default function UserDashboard() {
                   <motion.div
                     key={stat.label}
                     variants={staggerItem}
-                    className="flex items-center gap-2 sm:flex-col sm:items-center bg-temple-gold/10 rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[80px]"
+                    className="flex items-center gap-2 sm:flex-col sm:items-center bg-temple-gold/10 rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[80px] min-h-[60px]"
                     whileHover={{ scale: 1.08, backgroundColor: 'rgba(197,151,46,0.2)' }}
                   >
                     <stat.icon className="h-4 w-4 text-temple-gold" />
@@ -578,11 +578,11 @@ export default function UserDashboard() {
               animate={ordersInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl font-bold flex items-center gap-2">
+              <h2 className="text-xl font-bold flex items-center gap-2 leading-none">
                 <ShoppingBag className="h-5 w-5 text-temple-gold" />
                 My <span className="gold-text">Orders</span>
               </h2>
-              <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">
+              <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10 self-center">
                 View All <ChevronRight className="h-3 w-3 ml-1" />
               </Button>
             </motion.div>
@@ -628,11 +628,11 @@ export default function UserDashboard() {
                             <div className="w-12 h-12 rounded-lg overflow-hidden border border-temple-gold/15 flex-shrink-0 bg-temple-cream">
                               <Image src={item.image} alt={item.name} width={48} height={48} className="object-cover w-full h-full" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{item.name}</p>
-                              <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <p className="text-sm font-medium truncate leading-snug">{item.name}</p>
+                              <p className="text-xs text-muted-foreground leading-snug">Qty: {item.qty}</p>
                             </div>
-                            <span className="text-sm font-semibold">₹{item.price.toLocaleString('en-IN')}</span>
+                            <span className="text-sm font-semibold self-center">₹{item.price.toLocaleString('en-IN')}</span>
                           </div>
                         ))}
                       </div>
@@ -644,7 +644,7 @@ export default function UserDashboard() {
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-3 border-t border-temple-gold/10">
-                        <span className="text-base font-bold">Total: ₹{order.total.toLocaleString('en-IN')}</span>
+                        <span className="text-base font-bold leading-none">Total: ₹{order.total.toLocaleString('en-IN')}</span>
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" className="text-xs border-temple-gold/30 hover:bg-temple-gold/10">
                             <Truck className="h-3 w-3 mr-1" />Track
