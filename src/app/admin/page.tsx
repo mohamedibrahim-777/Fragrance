@@ -15,6 +15,7 @@ import {
   Settings, Menu, X, Bell, Search, TrendingUp, TrendingDown,
   IndianRupee, ChevronDown, Landmark, Flame, Sparkles,
   ArrowUpRight, ArrowDownRight, MoreHorizontal, Eye,
+  ArrowLeft, Home,
 } from "lucide-react";
 
 // ── Color Palette ──────────────────────────────────────
@@ -84,6 +85,10 @@ const navItems = [
   { icon: Users, label: "Customers", key: "customers" },
   { icon: BarChart3, label: "Analytics", key: "analytics" },
   { icon: Settings, label: "Settings", key: "settings" },
+];
+
+const bottomNavItems = [
+  { icon: Home, label: "Back to Home", href: "/" },
 ];
 
 // ── SVG Bar Chart ──────────────────────────────────────
@@ -239,6 +244,14 @@ export default function AdminDashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "/";
+    }
+  };
+
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: colors.warmCream }}>
       {/* ── CSS keyframe animations ──────────────────── */}
@@ -333,6 +346,18 @@ export default function AdminDashboard() {
           })}
         </nav>
 
+        {/* Back to Home link */}
+        <div className="px-3 py-2" style={{ borderTop: `1px solid ${colors.templeGold}25` }}>
+          {bottomNavItems.map((item) => (
+            <a key={item.href} href={item.href}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-white/60 hover:text-white hover:bg-white/8">
+              <item.icon className="w-5 h-5 shrink-0" />
+              <span>{item.label}</span>
+              <ArrowLeft className="w-3.5 h-3.5 ml-auto opacity-50" />
+            </a>
+          ))}
+        </div>
+
         {/* Sidebar footer */}
         <div className="px-4 py-4" style={{ borderTop: `1px solid ${colors.templeGold}25` }}>
           <div className="flex items-center gap-3">
@@ -356,6 +381,15 @@ export default function AdminDashboard() {
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="shrink-0 hover:bg-gray-100">
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
+
+          {/* Back to Home button */}
+          <a href="/"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+            style={{ backgroundColor: `${colors.maroon}10`, color: colors.maroon, border: `1px solid ${colors.maroon}20` }}>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <Home className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Back to Home</span>
+          </a>
 
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
