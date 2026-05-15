@@ -404,8 +404,55 @@
 .stagger-5 { animation-delay: 0.5s; }
 .stagger-6 { animation-delay: 0.6s; }
 
-/* ====== SCROLL REVEAL ====== */
+/* ====== SCROLL REVEAL (Safe for Static Export) ====== */
+/* Elements start at opacity:0.3 so they're visible even if JS fails.
+   When IntersectionObserver adds 'revealed', they animate to full visibility. */
 
+.scroll-reveal {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal:not(.revealed) {
+  opacity: 0.3;
+  transform: translateY(20px);
+}
+
+.scroll-reveal-left {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal-left:not(.revealed) {
+  opacity: 0.3;
+  transform: translateX(-30px);
+}
+
+.scroll-reveal-right {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal-right:not(.revealed) {
+  opacity: 0.3;
+  transform: translateX(30px);
+}
+
+.scroll-reveal-scale {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal-scale:not(.revealed) {
+  opacity: 0.3;
+  transform: scale(0.95);
+}
+
+/* Legacy reveal classes (kept for reference - these use opacity:0) */
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(40px);
@@ -448,6 +495,21 @@
 .reveal-scale.is-visible {
   opacity: 1;
   transform: scale(1);
+}
+
+/* ====== SCROLL PROGRESS BAR (CSS-only) ====== */
+
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  z-index: 100;
+  background: linear-gradient(270deg, #D4722A, #C5972E, #FFD700, #C5972E, #D4722A);
+  background-size: 400% 400%;
+  animation: gradient-shift 6s ease infinite;
+  width: var(--scroll-progress, 0%);
+  transition: width 0.1s linear;
 }
 
 /* ====== PARTICLE SYSTEM ====== */
