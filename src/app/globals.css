@@ -131,76 +131,15 @@
   }
 }
 
-/* ====== GPU ACCELERATION ====== */
-/* Force GPU compositing for animated elements to prevent jank */
-.gpu-accel {
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
 /* ====== SMOOTH SCROLLING ====== */
 html {
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ====== TEMPLE DECORATIVE PATTERNS ====== */
-
-.temple-border {
-  border-image: repeating-linear-gradient(
-    90deg,
-    #C5972E 0px, #C5972E 8px,
-    #D4722A 8px, #D4722A 16px,
-    #8B1A1A 16px, #8B1A1A 24px
-  ) 4;
-}
-
-.kolam-pattern {
-  background-image: radial-gradient(circle, #C5972E 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-.mandala-bg {
-  background-image:
-    radial-gradient(circle at 50% 50%, transparent 30%, rgba(197, 151, 46, 0.03) 30%, rgba(197, 151, 46, 0.03) 32%, transparent 32%),
-    radial-gradient(circle at 50% 50%, transparent 50%, rgba(197, 151, 46, 0.02) 50%, rgba(197, 151, 46, 0.02) 52%, transparent 52%),
-    radial-gradient(circle at 50% 50%, transparent 70%, rgba(197, 151, 46, 0.01) 70%, rgba(197, 151, 46, 0.01) 72%, transparent 72%);
-  background-size: 120px 120px;
-}
-
-.rangoli-dots {
-  background-image: radial-gradient(circle, rgba(197, 151, 46, 0.15) 1px, transparent 1px);
-  background-size: 16px 16px;
-}
-
-.temple-carving-border {
-  border: 3px solid transparent;
-  border-image: linear-gradient(135deg, #C5972E, #FFD700, #D4722A, #FFD700, #C5972E) 1;
-}
-
-.gopuram-shadow {
-  box-shadow: 0 4px 40px rgba(197, 151, 46, 0.25), 0 0 80px rgba(197, 151, 46, 0.1);
-}
-
-.divine-glow {
-  box-shadow: 0 0 15px rgba(255, 191, 0, 0.3), 0 0 30px rgba(197, 151, 46, 0.15), 0 0 60px rgba(197, 151, 46, 0.05);
 }
 
 /* ====== GRADIENTS ====== */
 
-.temple-gradient {
-  background: linear-gradient(135deg, #FFF8E7 0%, #F5E6C8 50%, #E0C98A 100%);
-}
-
 .saffron-gradient {
   background: linear-gradient(135deg, #D4722A 0%, #C5972E 50%, #B8860B 100%);
-}
-
-.saffron-gradient-animated {
-  background: linear-gradient(270deg, #D4722A, #C5972E, #FFD700, #C5972E, #D4722A);
-  background-size: 400% 400%;
-  animation: gradient-shift 6s ease infinite;
 }
 
 .deep-maroon-gradient {
@@ -217,7 +156,7 @@ html {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gold-shimmer 3s linear infinite;
+  animation: gold-shimmer 4s linear infinite;
 }
 
 .gold-text-static {
@@ -227,187 +166,49 @@ html {
   background-clip: text;
 }
 
-.temple-divider {
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    #C5972E 0px, #C5972E 12px,
-    transparent 12px, transparent 16px,
-    #D4722A 16px, #D4722A 28px,
-    transparent 28px, transparent 32px,
-    #8B1A1A 32px, #8B1A1A 44px,
-    transparent 44px, transparent 48px
-  );
-}
-
-.temple-divider-ornate {
-  height: 8px;
-  background: repeating-linear-gradient(
-    90deg,
-    #FFD700 0px, #FFD700 4px,
-    #C5972E 4px, #C5972E 8px,
-    #8B1A1A 8px, #8B1A1A 10px,
-    #C5972E 10px, #C5972E 14px,
-    #FFD700 14px, #FFD700 18px,
-    transparent 18px, transparent 24px
-  );
-}
-
 /* ====== SCROLLBAR ====== */
 
-::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #FFF8E7; }
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #C5972E, #D4722A);
-  border-radius: 5px;
+  border-radius: 4px;
   border: 2px solid #FFF8E7;
 }
 ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #B8860B, #C5972E); }
 
-/* ====== KEYFRAME ANIMATIONS (OPTIMIZED) ====== */
-/* All animations use transform/opacity only for GPU compositing */
-
-@keyframes float-slow {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -12px, 0); }
-}
-
-@keyframes incense-smoke {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) scaleX(0.8); }
-  30% { opacity: 0.4; transform: translate3d(0, -15px, 0) scaleX(1); }
-  60% { opacity: 0.2; transform: translate3d(0, -30px, 0) scaleX(1.2); }
-  100% { opacity: 0; transform: translate3d(0, -50px, 0) scaleX(1.4); }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 5px rgba(197, 151, 46, 0.4), 0 0 10px rgba(197, 151, 46, 0.1); }
-  50% { box-shadow: 0 0 15px rgba(197, 151, 46, 0.6), 0 0 30px rgba(197, 151, 46, 0.2); }
-}
-
-@keyframes diya-flicker {
-  0%, 100% { opacity: 1; transform: scale3d(1, 1, 1); }
-  25% { opacity: 0.85; transform: scale3d(0.97, 0.97, 1); }
-  50% { opacity: 1; transform: scale3d(1.02, 1.02, 1); }
-  75% { opacity: 0.9; transform: scale3d(0.99, 0.99, 1); }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translate3d(0, 40px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes spin-reverse {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
-}
+/* ====== KEYFRAME ANIMATIONS (LIGHTWEIGHT) ====== */
+/* Only transform/opacity for GPU compositing - no box-shadow, filter, or layout triggers */
 
 @keyframes gold-shimmer {
   0% { background-position: 0% center; }
   100% { background-position: 200% center; }
 }
 
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes particle-float {
-  0% { transform: translate3d(0, 100vh, 0) rotate(0deg); opacity: 0; }
-  10% { opacity: 0.6; }
-  90% { opacity: 0.6; }
-  100% { transform: translate3d(0, -10vh, 0) rotate(360deg); opacity: 0; }
-}
-
 @keyframes marquee {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scale3d(1, 1, 1); }
-  50% { transform: scale3d(1.05, 1.05, 1); }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translate3d(0, 8px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
 }
 
 /* ====== ANIMATION UTILITY CLASSES ====== */
 
-.animate-float-slow { animation: float-slow 6s ease-in-out infinite; will-change: transform; }
-.animate-smoke { animation: incense-smoke 3s ease-out infinite; will-change: transform, opacity; }
-.animate-glow { animation: glow-pulse 2s ease-in-out infinite; }
-.animate-diya { animation: diya-flicker 1.5s ease-in-out infinite; will-change: transform, opacity; }
-.animate-slide-up { animation: slide-up 0.7s ease-out forwards; }
-.animate-spin-slow { animation: spin-slow 30s linear infinite; will-change: transform; }
-.animate-spin-reverse { animation: spin-reverse 25s linear infinite; will-change: transform; }
-.animate-shimmer { animation: gold-shimmer 3s linear infinite; }
-.animate-gradient { animation: gradient-shift 6s ease infinite; }
-.animate-marquee { animation: marquee 30s linear infinite; will-change: transform; }
-.animate-breathe { animation: breathe 4s ease-in-out infinite; will-change: transform; }
-.animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
-
-/* Staggered animation delays */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-.stagger-5 { animation-delay: 0.5s; }
-.stagger-6 { animation-delay: 0.6s; }
-
-/* ====== SCROLL REVEAL (GPU Optimized) ====== */
-/* Elements start visible. IntersectionObserver adds 'revealed' for smooth entry. */
-
-.scroll-reveal {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-}
-
-.scroll-reveal:not(.revealed) {
-  opacity: 0.15;
-  transform: translate3d(0, 16px, 0);
-}
-
-.scroll-reveal-left {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-}
-
-.scroll-reveal-left:not(.revealed) {
-  opacity: 0.15;
-  transform: translate3d(-20px, 0, 0);
-}
-
-.scroll-reveal-right {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-}
-
-.scroll-reveal-right:not(.revealed) {
-  opacity: 0.15;
-  transform: translate3d(20px, 0, 0);
-}
-
-.scroll-reveal-scale {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-}
-
-.scroll-reveal-scale:not(.revealed) {
-  opacity: 0.15;
-  transform: translate3d(0, 0, 0) scale(0.97);
-}
+.animate-marquee { animation: marquee 25s linear infinite; }
+.animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
 
 /* ====== SCROLL PROGRESS BAR ====== */
 
@@ -415,71 +216,53 @@ html {
   position: fixed;
   top: 0;
   left: 0;
-  height: 3px;
+  height: 2px;
   z-index: 100;
-  background: linear-gradient(270deg, #D4722A, #C5972E, #FFD700, #C5972E, #D4722A);
-  background-size: 400% 400%;
-  animation: gradient-shift 6s ease infinite;
+  background: linear-gradient(90deg, #D4722A, #C5972E, #FFD700);
   width: var(--scroll-progress, 0%);
   will-change: width;
-  transition: width 50ms linear;
+  transition: width 80ms linear;
 }
 
-/* ====== PARTICLE SYSTEM (Optimized - GPU only) ====== */
+/* ====== SCROLL REVEAL (LIGHTWEIGHT) ====== */
+/* Elements start slightly hidden, then reveal when IntersectionObserver adds 'revealed' */
 
-.particle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  animation: particle-float linear infinite;
-  pointer-events: none;
-  will-change: transform, opacity;
-  contain: layout style paint;
+.reveal-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
-/* ====== ARTISTIC CARD STYLES ====== */
-
-.card-artistic {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  will-change: transform;
+.reveal-up.revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.card-artistic::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.06), transparent);
-  transition: left 0.5s ease;
-  z-index: 1;
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
-.card-artistic:hover::before {
-  left: 100%;
+.reveal-left.revealed {
+  opacity: 1;
+  transform: translateX(0);
 }
 
-.card-artistic:hover {
-  transform: translate3d(0, -6px, 0);
-  box-shadow: 0 16px 40px rgba(197, 151, 46, 0.15), 0 0 0 1px rgba(197, 151, 46, 0.2);
+.reveal-right {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
-/* ====== ORNATE BORDER STYLE ====== */
-
-.ornate-border {
-  border: 2px solid #C5972E;
-  position: relative;
+.reveal-right.revealed {
+  opacity: 1;
+  transform: translateX(0);
 }
 
-.ornate-border::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid rgba(197, 151, 46, 0.3);
-  border-radius: inherit;
-  pointer-events: none;
+/* ====== CONTENT VISIBILITY (PERFORMANCE) ====== */
+/* Skip rendering for off-screen sections */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
 }

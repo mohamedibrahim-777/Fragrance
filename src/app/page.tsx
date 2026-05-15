@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Flame, ShoppingCart, Heart, Star, Search, Menu, X, Minus, Plus,
-  MapPin, Phone, Mail, Clock, ChevronRight, Truck, Shield, Award,
+  MapPin, Phone, Mail, ChevronRight, Truck, Shield, Award,
   Sparkles, Lamp, Flower2, Sun, Eye, Share2, Check, ArrowUp,
-  Gem, FlameKindling, CircleDot, User, BookOpen
+  Gem, FlameKindling, CircleDot, User, BookOpen, ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
@@ -20,9 +20,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter
 } from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
-import { useScrollReveal, useScrollProgress } from '@/hooks/useScrollReveal'
 
 // ====== TYPES ======
 interface Product {
@@ -87,7 +85,7 @@ const products: Product[] = [
 const testimonials = [
   {
     name: 'Priya Venkatesh', location: 'Chennai, Tamil Nadu',
-    rating: 5, text: 'The Chandanam Sandalwood agarbathi reminds me of my visits to Tirupati temple. The fragrance is absolutely divine and fills our entire pooja room with sacred aroma. Truly a blessing!',
+    rating: 5, text: 'The Chandanam Sandalwood agarbathi reminds me of my visits to Tirupati temple. The fragrance is absolutely divine and fills our entire pooja room with sacred aroma.',
     avatar: 'PV'
   },
   {
@@ -97,7 +95,7 @@ const testimonials = [
   },
   {
     name: 'Lakshmi Sharma', location: 'Hyderabad, Telangana',
-    rating: 5, text: 'The Sambrani Herbal incense has become essential for our evening aarti. The natural fragrance purifies the entire home. My grandmother approves — and that says everything!',
+    rating: 5, text: 'The Sambrani Herbal incense has become essential for our evening aarti. The natural fragrance purifies the entire home. My grandmother approves!',
     avatar: 'LS'
   }
 ]
@@ -109,15 +107,6 @@ const trustBadges = [
   { icon: Sparkles, title: 'Handcrafted', desc: 'Traditional methods' }
 ]
 
-const marqueeMessages = [
-  '✦ Free Delivery on Orders Above ₹499 ✦',
-  '✦ 100% Natural Ingredients ✦',
-  '✦ Trusted by 500+ Temples ✦',
-  '✦ Handcrafted with Devotion ✦',
-  '✦ 75+ Years of Sacred Tradition ✦',
-  '✦ Festive Season Sale - Up to 40% Off ✦'
-]
-
 const poojaSteps = [
   { step: 1, title: 'Prepare', desc: 'Clean the pooja room and arrange the altar with flowers and sacred items', icon: Sparkles },
   { step: 2, title: 'Light', desc: 'Light the agarbathi and diya to invite divine presence and purify the space', icon: Flame },
@@ -126,77 +115,7 @@ const poojaSteps = [
   { step: 5, title: 'Meditate', desc: 'Sit in silence, absorb the sacred fragrance, and experience inner peace', icon: Sun }
 ]
 
-// ====== SUB-COMPONENTS ======
-function FloatingParticles({ count = 8 }: { count?: number }) {
-  // Reduced particle count for smooth scrolling
-  const particles = Array.from({ length: count }, (_, i) => ({
-    id: i,
-    left: ((i * 13.7) % 100), // Deterministic positions (no Math.random on render)
-    delay: (i * 1.3) % 10,
-    duration: 10 + (i * 2.5) % 10,
-    size: 2 + (i % 3),
-    color: ['#C5972E', '#D4722A', '#FFD700', '#FFBF00'][i % 4]
-  }))
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ contain: 'strict' }}>
-      {particles.map(p => (
-        <div key={p.id} className="particle" style={{
-          left: `${p.left}%`, width: p.size, height: p.size,
-          backgroundColor: p.color,
-          animationDelay: `${p.delay}s`, animationDuration: `${p.duration}s`
-        }} />
-      ))}
-    </div>
-  )
-}
-
-function IncenseSmoke({ className = '' }: { className?: string }) {
-  return (
-    <div className={`absolute pointer-events-none ${className}`}>
-      {[0, 1, 2].map(i => (
-        <div key={i} className="animate-smoke" style={{
-          position: 'absolute', bottom: 0, left: `${30 + i * 20}%`,
-          width: 16 + i * 4, height: 30 + i * 10,
-          background: 'radial-gradient(ellipse, rgba(255,255,255,0.12), transparent)',
-          filter: 'blur(6px)', animationDelay: `${i * 0.8}s`
-        }} />
-      ))}
-    </div>
-  )
-}
-
-function DiyaFlame({ className = '' }: { className?: string }) {
-  return (
-    <div className={`relative ${className}`}>
-      <div className="animate-diya" style={{
-        width: 14, height: 20, borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-        background: 'radial-gradient(ellipse at center, #FFD700, #FF8C00, #FF4500)',
-        boxShadow: '0 0 12px rgba(255,165,0,0.6), 0 0 24px rgba(255,140,0,0.3)'
-      }} />
-    </div>
-  )
-}
-
-function MandalaDecor({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="100" cy="100" r="90" stroke="#C5972E" strokeWidth="0.5" opacity="0.3" />
-      <circle cx="100" cy="100" r="75" stroke="#C5972E" strokeWidth="0.5" opacity="0.25" />
-      <circle cx="100" cy="100" r="60" stroke="#D4722A" strokeWidth="0.5" opacity="0.2" />
-      <circle cx="100" cy="100" r="45" stroke="#C5972E" strokeWidth="0.5" opacity="0.15" />
-      {Array.from({ length: 12 }).map((_, i) => (
-        <line key={i} x1="100" y1="10" x2="100" y2="190"
-          stroke="#C5972E" strokeWidth="0.3" opacity="0.15"
-          transform={`rotate(${i * 30} 100 100)`} />
-      ))}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <circle key={`d${i}`} cx={100 + 70 * Math.cos(i * Math.PI / 4)} cy={100 + 70 * Math.sin(i * Math.PI / 4)}
-          r="3" fill="#C5972E" opacity="0.2" />
-      ))}
-    </svg>
-  )
-}
-
+// ====== SIMPLE COUNTER (no IntersectionObserver, just starts on mount) ======
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
@@ -207,7 +126,7 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
       if (entry.isIntersecting && !hasAnimated.current) {
         hasAnimated.current = true
         let start = 0
-        const duration = 2000
+        const duration = 1500
         const step = (timestamp: number) => {
           if (!start) start = timestamp
           const progress = Math.min((timestamp - start) / duration, 1)
@@ -216,7 +135,7 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
         }
         requestAnimationFrame(step)
       }
-    }, { threshold: 0.5 })
+    }, { threshold: 0.3 })
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
   }, [target])
@@ -224,32 +143,9 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
   return <div ref={ref}>{count}{suffix}</div>
 }
 
-function GopuramSVG({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Base */}
-      <rect x="20" y="160" width="80" height="40" fill="#8B1A1A" opacity="0.15" />
-      {/* Tower tiers */}
-      <rect x="30" y="120" width="60" height="40" fill="#8B1A1A" opacity="0.12" />
-      <rect x="38" y="85" width="44" height="35" fill="#8B1A1A" opacity="0.10" />
-      <rect x="44" y="55" width="32" height="30" fill="#8B1A1A" opacity="0.08" />
-      <rect x="50" y="30" width="20" height="25" fill="#8B1A1A" opacity="0.06" />
-      {/* Kalasam (top pinnacle) */}
-      <circle cx="60" cy="22" r="8" fill="#C5972E" opacity="0.2" />
-      <line x1="60" y1="14" x2="60" y2="6" stroke="#C5972E" strokeWidth="2" opacity="0.2" />
-      {/* Decorative dots */}
-      {[0, 1, 2, 3, 4].map(i => (
-        <circle key={i} cx={40 + i * 10} cy="150" r="2" fill="#C5972E" opacity="0.15" />
-      ))}
-    </svg>
-  )
-}
-
 // ====== MAIN COMPONENT ======
 export default function Home() {
   const { toast } = useToast()
-  useScrollReveal()
-  useScrollProgress()
 
   const [cart, setCart] = useState<CartItem[]>([])
   const [wishlist, setWishlist] = useState<number[]>([])
@@ -261,12 +157,54 @@ export default function Home() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [email, setEmail] = useState('')
+  const [revealedSections, setRevealedSections] = useState<Set<string>>(new Set())
 
-  // Scroll to top detection
+  // Lightweight scroll detection with throttling
   useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 500)
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true
+        requestAnimationFrame(() => {
+          setShowScrollTop(window.scrollY > 500)
+          // Update scroll progress
+          const scrollTop = window.scrollY
+          const docHeight = document.documentElement.scrollHeight - window.innerHeight
+          const progress = docHeight > 0 ? scrollTop / docHeight : 0
+          document.documentElement.style.setProperty('--scroll-progress', `${progress * 100}%`)
+          ticking = false
+        })
+      }
+    }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // IntersectionObserver for section reveals - one observer, lightweight
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.id
+            if (id) {
+              setRevealedSections(prev => new Set(prev).add(id))
+              observer.unobserve(entry.target)
+            }
+            entry.target.classList.add('revealed')
+          }
+        }
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+    )
+
+    // Observe all sections and reveal elements
+    const selectors = ['section[id]', '.reveal-up', '.reveal-left', '.reveal-right']
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => observer.observe(el))
+    })
+
+    return () => observer.disconnect()
   }, [])
 
   // Cart functions
@@ -280,10 +218,7 @@ export default function Home() {
       }
       return [...prev, { ...product, quantity: 1 }]
     })
-    toast({
-      title: 'Added to Cart!',
-      description: `${product.name} has been added to your cart.`,
-    })
+    toast({ title: 'Added to Cart!', description: `${product.name} has been added to your cart.` })
   }, [toast])
 
   const updateQuantity = useCallback((id: number, delta: number) => {
@@ -301,12 +236,9 @@ export default function Home() {
   }, [])
 
   const toggleWishlist = useCallback((id: number) => {
-    setWishlist(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    )
+    setWishlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }, [])
 
-  // Derived state
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
@@ -322,24 +254,21 @@ export default function Home() {
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (email) {
-      toast({
-        title: '🙏 Subscribed!',
-        description: 'You will receive sacred fragrance updates and offers.',
-      })
+      toast({ title: 'Subscribed!', description: 'You will receive sacred fragrance updates and offers.' })
       setEmail('')
     }
   }
 
   return (
     <div className="min-h-screen bg-temple-cream">
-      {/* Scroll progress bar - CSS only, no Framer Motion */}
+      {/* Scroll progress bar */}
       <div className="scroll-progress-bar" />
 
       {/* ====== HEADER ====== */}
-      <header className="sticky top-0 z-50 bg-temple-cream/95 backdrop-blur-md border-b border-temple-gold/20">
+      <header className="sticky top-0 z-50 bg-temple-cream/98 border-b border-temple-gold/15" style={{ backdropFilter: 'blur(8px)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Top bar */}
-          <div className="flex items-center justify-between py-2 text-xs text-temple-gold border-b border-temple-gold/10">
+          <div className="flex items-center justify-between py-1.5 text-[11px] text-temple-gold/80 border-b border-temple-gold/8">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> +91 98765 43210</span>
               <span className="hidden sm:flex items-center gap-1"><Mail className="w-3 h-3" /> info@shrifragrance.com</span>
@@ -351,15 +280,15 @@ export default function Home() {
           <div className="flex items-center justify-between py-3 gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
-              <img src="/images/logo.png" alt="Shri Fragrance Logo" width={48} height={48} className="rounded-full" />
+              <img src="/images/logo.png" alt="Shri Fragrance Logo" width={44} height={44} className="rounded-full" />
               <div className="hidden sm:block">
                 <h1 className="text-lg font-bold tracking-wider gold-text-static">SHRI FRAGRANCE</h1>
-                <p className="text-[10px] tracking-widest text-temple-saffron uppercase">Sacred Temple Agarbathi</p>
+                <p className="text-[9px] tracking-[0.2em] text-temple-saffron/80 uppercase">Sacred Temple Agarbathi</p>
               </div>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-5">
+            <nav className="hidden lg:flex items-center gap-1">
               {[
                 { label: 'Home', href: '#home' },
                 { label: 'Collections', href: '#products' },
@@ -368,37 +297,37 @@ export default function Home() {
                 { label: 'Contact', href: '#contact' }
               ].map(item => (
                 <Link key={item.label} href={item.href}
-                  className="text-sm font-medium text-temple-deep hover:text-temple-saffron transition-colors h-9 flex items-center">
+                  className="px-3 py-2 text-sm font-medium text-temple-deep/80 hover:text-temple-saffron rounded-md hover:bg-temple-gold/5 transition-colors">
                   {item.label}
                 </Link>
               ))}
             </nav>
 
             {/* Right actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {showSearch && (
                 <Input
                   placeholder="Search fragrances..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-9 w-48 text-sm bg-white/80 border-temple-gold/30 transition-all duration-300"
+                  className="h-9 w-48 text-sm bg-white/90 border-temple-gold/25"
                   autoFocus
                 />
               )}
               <Button variant="ghost" size="icon" onClick={() => { setShowSearch(!showSearch); if (showSearch) setSearchQuery('') }}
-                className="text-temple-deep hover:text-temple-saffron h-9 w-9">
-                <Search className="w-5 h-5" />
+                className="text-temple-deep/70 hover:text-temple-saffron h-9 w-9">
+                <Search className="w-[18px] h-[18px]" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)}
-                className="relative text-temple-deep hover:text-temple-saffron h-9 w-9">
-                <ShoppingCart className="w-5 h-5" />
+                className="relative text-temple-deep/70 hover:text-temple-saffron h-9 w-9">
+                <ShoppingCart className="w-[18px] h-[18px]" />
                 {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-temple-saffron text-white text-[10px]">
+                  <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center p-0 bg-temple-saffron text-white text-[9px]">
                     {cartCount}
                   </Badge>
                 )}
               </Button>
-              <Button variant="ghost" size="icon" className="lg:hidden text-temple-deep"
+              <Button variant="ghost" size="icon" className="lg:hidden text-temple-deep/70"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
@@ -407,8 +336,8 @@ export default function Home() {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden overflow-hidden border-t border-temple-gold/10 animate-fade-in">
-              <nav className="flex flex-col py-4 gap-1">
+            <div className="lg:hidden border-t border-temple-gold/10 pb-3">
+              <nav className="flex flex-col gap-0.5">
                 {[
                   { label: 'Home', href: '#home' },
                   { label: 'Collections', href: '#products' },
@@ -418,9 +347,9 @@ export default function Home() {
                 ].map(item => (
                   <Link key={item.label} href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-temple-deep hover:bg-temple-gold/10 rounded-md transition-colors">
+                    className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-temple-deep/80 hover:bg-temple-gold/8 rounded-md">
                     {item.label}
-                    <ChevronRight className="w-4 h-4 ml-auto opacity-40" />
+                    <ChevronRight className="w-4 h-4 opacity-30" />
                   </Link>
                 ))}
               </nav>
@@ -431,131 +360,127 @@ export default function Home() {
 
       <main>
         {/* ====== HERO SECTION ====== */}
-        <section id="home" className="relative min-h-[90vh] flex items-center overflow-hidden">
+        <section id="home" className="relative min-h-[88vh] flex items-center overflow-hidden">
           <div className="absolute inset-0">
             <img src="/images/hero-bg.png" alt="Temple background" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-r from-temple-maroon/90 via-temple-deep/80 to-temple-maroon/70" />
+            <div className="absolute inset-0 bg-gradient-to-br from-temple-maroon/92 via-temple-deep/85 to-temple-maroon/75" />
           </div>
-          <FloatingParticles count={8} />
 
-          {/* Mandala decoration - only one for performance */}
-          <MandalaDecor className="absolute top-10 right-10 w-48 h-48 opacity-20 animate-spin-slow hidden lg:block" />
-
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-20 w-full">
-            <div className="max-w-3xl">
-              {/* Brand name with gold shimmer */}
-              <div className="mb-6">
-                <h2 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-wider gold-text animate-shimmer">
-                  SHRI FRAGRANCE
-                </h2>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 mb-6">
+                <div className="w-1.5 h-1.5 rounded-full bg-temple-amber" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
+                <span className="text-xs text-white/80 font-medium tracking-wide">Sacred Temple Traditions Since 1948</span>
               </div>
 
-              <p className="text-xl sm:text-2xl md:text-3xl text-temple-amber font-light mb-4 tracking-wide scroll-reveal">
-                From Sacred Temples to Your Home
-              </p>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-5 leading-[1.1]">
+                From Sacred<br />
+                <span className="gold-text">Temples</span> to<br />
+                Your Home
+              </h2>
 
-              <p className="text-base sm:text-lg text-white/80 mb-8 max-w-xl leading-relaxed scroll-reveal">
-                Experience the divine fragrances handcrafted with devotion, using sacred ingredients
+              <p className="text-base sm:text-lg text-white/70 mb-8 max-w-lg leading-relaxed">
+                Experience divine fragrances handcrafted with devotion, using sacred ingredients
                 sourced from ancient temple traditions across South India.
               </p>
 
-              <div className="flex flex-wrap items-center gap-4 mb-12 scroll-reveal">
+              <div className="flex flex-wrap items-center gap-3 mb-14">
                 <Button asChild size="lg"
-                  className="saffron-gradient text-white hover:opacity-90 px-8 py-6 text-base font-semibold shadow-lg">
+                  className="saffron-gradient text-white hover:brightness-110 px-7 py-5 text-sm font-semibold shadow-lg shadow-temple-saffron/25 transition-all">
                   <a href="#products">
-                    <Flame className="w-5 h-5 mr-2" />
+                    <Flame className="w-4 h-4 mr-2" />
                     Explore Collection
                   </a>
                 </Button>
                 <Button asChild variant="outline" size="lg"
-                  className="border-temple-gold text-temple-gold hover:bg-temple-gold/10 px-8 py-6 text-base">
+                  className="border-white/25 text-white/90 hover:bg-white/10 hover:border-white/40 px-7 py-5 text-sm bg-transparent">
                   <a href="#pooja-guide">
-                    <Lamp className="w-5 h-5 mr-2" />
-                    Pooja Essentials
+                    <Lamp className="w-4 h-4 mr-2" />
+                    Pooja Guide
                   </a>
                 </Button>
               </div>
 
               {/* Stats */}
-              <div className="flex flex-wrap gap-12">
+              <div className="flex gap-8 sm:gap-14">
                 {[
                   { value: 50, suffix: '+', label: 'Sacred Fragrances' },
                   { value: 75, suffix: '+', label: 'Years of Tradition' },
                   { value: 500, suffix: 'K+', label: 'Happy Families' }
                 ].map((stat, i) => (
-                  <div key={i} className="text-center flex-1 min-w-[80px]">
+                  <div key={i}>
                     <div className="text-2xl sm:text-3xl font-bold gold-text">
                       <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                     </div>
-                    <p className="text-sm text-white/60 mt-1">{stat.label}</p>
+                    <p className="text-[11px] text-white/50 mt-0.5 tracking-wide">{stat.label}</p>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Diya decoration */}
-            <div className="absolute bottom-8 right-8 sm:right-16 hidden sm:block animate-float-slow">
-              <DiyaFlame />
-              <div className="w-8 h-3 bg-temple-brass rounded-full mt-1 mx-auto" />
-            </div>
+          {/* Scroll indicator */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/40">
+            <span className="text-[10px] tracking-widest uppercase">Scroll</span>
+            <ChevronDown className="w-4 h-4" style={{ animation: 'float-y 2s ease-in-out infinite' }} />
           </div>
         </section>
 
         {/* ====== MARQUEE STRIP ====== */}
-        <div className="deep-maroon-gradient py-3 overflow-hidden">
+        <div className="deep-maroon-gradient py-2.5 overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap">
-            {[...marqueeMessages, ...marqueeMessages].map((msg, i) => (
-              <span key={i} className="text-temple-amber text-sm font-medium mx-8">
+            {['Free Delivery on Orders Above ₹499', '100% Natural Ingredients', 'Trusted by 500+ Temples', 'Handcrafted with Devotion', '75+ Years of Sacred Tradition', 'Festive Season Sale - Up to 40% Off',
+              'Free Delivery on Orders Above ₹499', '100% Natural Ingredients', 'Trusted by 500+ Temples', 'Handcrafted with Devotion', '75+ Years of Sacred Tradition', 'Festive Season Sale - Up to 40% Off'
+            ].map((msg, i) => (
+              <span key={i} className="text-temple-amber/90 text-xs font-medium mx-6 flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-temple-amber/50" />
                 {msg}
               </span>
             ))}
           </div>
         </div>
 
-        {/* ====== TRUST BADGES / FEATURES ====== */}
-        <section className="py-12 bg-white/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {/* ====== TRUST BADGES ====== */}
+        <section className="py-10 bg-white/40">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {trustBadges.map((badge, i) => (
                 <div key={i}
-                  className="scroll-reveal flex flex-col items-center text-center p-6 rounded-xl bg-temple-cream/50 border border-temple-gold/10 hover:shadow-lg hover:shadow-temple-gold/10 transition-all"
-                  style={{ transitionDelay: `${i * 0.1}s` }}>
-                  <div className="w-14 h-14 rounded-full saffron-gradient flex items-center justify-center mb-3">
-                    <badge.icon className="w-7 h-7 text-white" />
+                  className="reveal-up flex flex-col items-center text-center p-5 rounded-xl bg-white border border-temple-gold/8 hover:border-temple-gold/20 hover:shadow-md transition-all duration-300"
+                  style={{ transitionDelay: `${i * 80}ms` }}>
+                  <div className="w-12 h-12 rounded-full saffron-gradient flex items-center justify-center mb-3">
+                    <badge.icon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-temple-deep text-sm">{badge.title}</h3>
-                  <p className="text-xs text-temple-gold mt-1">{badge.desc}</p>
+                  <h3 className="font-semibold text-temple-deep text-sm">{badge.title}</h3>
+                  <p className="text-[11px] text-temple-gold/70 mt-0.5">{badge.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <div className="temple-divider-ornate max-w-7xl mx-auto" />
-
         {/* ====== PRODUCTS SECTION ====== */}
-        <section id="products" className="py-16 bg-temple-cream">
+        <section id="products" className="py-14 sm:py-16 bg-temple-cream">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12 scroll-reveal">
-              <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 mb-4">
+            <div className="text-center mb-10 reveal-up">
+              <Badge className="bg-temple-gold/8 text-temple-gold border-temple-gold/15 mb-3">
                 <Sparkles className="w-3 h-3 mr-1" /> Sacred Collection
               </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-temple-deep mb-3">
+              <h2 className="text-2xl sm:text-3xl font-bold text-temple-deep mb-2">
                 Our <span className="gold-text-static">Divine</span> Fragrances
               </h2>
-              <p className="text-temple-gold max-w-2xl mx-auto">
-                Each agarbathi is handcrafted with sacred ingredients, blessed in temple traditions,
-                and made with devotion to bring divine fragrance to your home.
+              <p className="text-sm text-temple-gold/80 max-w-lg mx-auto">
+                Each agarbathi is handcrafted with sacred ingredients and blessed in temple traditions.
               </p>
             </div>
 
             {/* Category Tabs */}
-            <div className="mb-8 scroll-reveal">
+            <div className="mb-8 reveal-up">
               <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                <TabsList className="mx-auto flex-wrap h-auto gap-1 bg-white/50 border border-temple-gold/10 p-1">
+                <TabsList className="mx-auto flex-wrap h-auto gap-1 bg-white/60 border border-temple-gold/10 p-1">
                   {['All', 'Premium', 'Floral', 'Classic', 'Herbal'].map(cat => (
                     <TabsTrigger key={cat} value={cat}
-                      className="data-[state=active]:saffron-gradient data-[state=active]:text-white text-sm px-4 py-2">
+                      className="data-[state=active]:saffron-gradient data-[state=active]:text-white text-xs px-4 py-1.5 rounded-md">
                       {cat}
                     </TabsTrigger>
                   ))}
@@ -564,68 +489,60 @@ export default function Home() {
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredProducts.map((product, idx) => {
                 const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                 const isWished = wishlist.includes(product.id)
                 return (
-                  <div key={product.id}
-                    className="scroll-reveal"
-                    style={{ transitionDelay: `${idx * 0.08}s` }}>
-                    <Card className="card-artistic group bg-white border-temple-gold/10 overflow-hidden">
+                  <div key={product.id} className="reveal-up" style={{ transitionDelay: `${idx * 60}ms` }}>
+                    <Card className="group bg-white border-temple-gold/8 overflow-hidden hover:shadow-xl hover:shadow-temple-gold/8 transition-all duration-300 hover:-translate-y-1">
                       <div className="relative overflow-hidden">
-                        <div className="relative aspect-square bg-temple-cream/50 p-6">
-                          <img src={product.image} alt={product.name} loading="lazy" className="object-contain p-4 w-full h-full group-hover:scale-105 transition-transform duration-300" />
+                        <div className="relative aspect-square bg-gradient-to-b from-temple-cream/60 to-white p-6">
+                          <img src={product.image} alt={product.name} loading="lazy"
+                            className="object-contain p-4 w-full h-full group-hover:scale-105 transition-transform duration-500" />
                         </div>
-                        {/* Badge */}
-                        <Badge className={`absolute top-3 left-3 ${product.badgeColor} text-xs font-semibold`}>
+                        <Badge className={`absolute top-3 left-3 ${product.badgeColor} text-[10px] font-semibold px-2 py-0.5`}>
                           {product.badge}
                         </Badge>
-                        {/* Discount */}
-                        <Badge className="absolute top-3 right-3 bg-temple-deep text-white text-xs">
+                        <Badge className="absolute top-3 right-3 bg-temple-deep text-white text-[10px] px-2 py-0.5">
                           -{discount}%
                         </Badge>
-                        {/* Action buttons */}
-                        <div className="absolute bottom-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        {/* Quick actions */}
+                        <div className="absolute bottom-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                           <Button size="icon" variant="secondary"
-                            className="h-9 w-9 rounded-full bg-white/90 shadow-md"
+                            className="h-8 w-8 rounded-full bg-white/95 shadow-sm"
                             onClick={() => toggleWishlist(product.id)}>
-                            <Heart className={`w-4 h-4 ${isWished ? 'fill-red-500 text-red-500' : ''}`} />
+                            <Heart className={`w-3.5 h-3.5 ${isWished ? 'fill-red-500 text-red-500' : ''}`} />
                           </Button>
                           <Button size="icon" variant="secondary"
-                            className="h-9 w-9 rounded-full bg-white/90 shadow-md"
+                            className="h-8 w-8 rounded-full bg-white/95 shadow-sm"
                             onClick={() => setQuickViewProduct(product)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="secondary"
-                            className="h-9 w-9 rounded-full bg-white/90 shadow-md">
-                            <Share2 className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </div>
                       <CardContent className="p-4">
-                        {/* Rating */}
-                        <div className="flex items-center gap-1 mb-2">
+                        <div className="flex items-center gap-0.5 mb-1.5">
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={`w-3.5 h-3.5 ${i < Math.floor(product.rating) ? 'fill-temple-amber text-temple-amber' : 'text-temple-gold/30'}`} />
+                            <Star key={i} className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'fill-temple-amber text-temple-amber' : 'text-temple-gold/20'}`} />
                           ))}
-                          <span className="text-xs text-temple-gold/70 ml-1">({product.reviews})</span>
+                          <span className="text-[10px] text-temple-gold/50 ml-1">({product.reviews})</span>
                         </div>
-                        <h3 className="font-bold text-temple-deep text-base mb-0.5">{product.name}</h3>
-                        <p className="text-xs text-temple-gold/70 mb-1">{product.subtitle}</p>
-                        <p className="text-xs text-temple-saffron/80 flex items-center gap-1">
+                        <h3 className="font-semibold text-temple-deep text-sm mb-0.5">{product.name}</h3>
+                        <p className="text-[11px] text-temple-gold/60 mb-0.5">{product.subtitle}</p>
+                        <p className="text-[11px] text-temple-saffron/70 flex items-center gap-1">
                           <FlameKindling className="w-3 h-3" /> {product.fragrance}
                         </p>
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="text-xl font-bold text-temple-deep">₹{product.price}</span>
-                          <span className="text-sm text-temple-gold/50 line-through">₹{product.originalPrice}</span>
+                        <div className="flex items-center gap-2 mt-2.5">
+                          <span className="text-lg font-bold text-temple-deep">₹{product.price}</span>
+                          <span className="text-xs text-temple-gold/40 line-through">₹{product.originalPrice}</span>
                         </div>
                       </CardContent>
                       <CardFooter className="p-4 pt-0">
                         <Button onClick={() => addToCart(product)}
-                          className="w-full saffron-gradient text-white hover:opacity-90 font-semibold"
+                          className="w-full saffron-gradient text-white hover:brightness-110 font-semibold text-sm h-9 transition-all"
                           size="sm">
-                          <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+                          <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Add to Cart
                         </Button>
                       </CardFooter>
                     </Card>
@@ -635,92 +552,86 @@ export default function Home() {
             </div>
 
             {filteredProducts.length === 0 && (
-              <div className="text-center py-16 scroll-reveal">
-                <CircleDot className="w-12 h-12 text-temple-gold/30 mx-auto mb-4" />
-                <p className="text-temple-gold/60 text-lg">No products found matching your search.</p>
+              <div className="text-center py-16">
+                <CircleDot className="w-10 h-10 text-temple-gold/20 mx-auto mb-3" />
+                <p className="text-temple-gold/50">No products found matching your search.</p>
               </div>
             )}
           </div>
         </section>
 
         {/* ====== SPECIAL OFFER BANNER ====== */}
-        <section className="relative py-16 sm:py-20 overflow-hidden royal-gradient">
-          {/* Minimal decorative elements for smooth scrolling */}
-          <div className="absolute -top-10 -left-10 w-72 h-72 border-2 border-dashed border-temple-amber/20 rounded-full animate-spin-slow" />
-
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="flex-1 text-center lg:text-left scroll-reveal-left">
-              <Badge className="bg-temple-amber/20 text-temple-amber border-temple-amber/30 mb-4">
+        <section className="relative py-14 sm:py-16 overflow-hidden royal-gradient">
+          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="flex-1 text-center lg:text-left reveal-left">
+              <Badge className="bg-temple-amber/15 text-temple-amber border-temple-amber/25 mb-3">
                 <Gem className="w-3 h-3 mr-1" /> Festive Special
               </Badge>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">
                 Complete Pooja Collection
               </h2>
-              <p className="text-lg text-temple-amber/80 mb-6">
-                Save <span className="text-temple-amber font-bold">40%</span> This Festive Season —
-                Includes Chandanam, Nag Champa, Rose Pushpam & Sambrani
+              <p className="text-base text-white/70 mb-5 max-w-md">
+                Save <span className="text-temple-amber font-bold text-lg">40%</span> This Festive Season
+                — Includes Chandanam, Nag Champa, Rose Pushpam & Sambrani
               </p>
               <Button size="lg"
-                className="saffron-gradient text-white hover:opacity-90 px-8 py-6 text-lg font-bold shadow-xl">
-                <ShoppingCart className="w-5 h-5 mr-2" />
+                className="saffron-gradient text-white hover:brightness-110 px-7 py-5 text-sm font-bold shadow-xl transition-all">
+                <ShoppingCart className="w-4 h-4 mr-2" />
                 Shop Pooja Set — ₹1,499
               </Button>
             </div>
 
-            <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center shrink-0 scroll-reveal-right">
-              {/* Rotating circles */}
-              <div className="absolute inset-0 border-2 border-dashed border-temple-amber/30 rounded-full animate-spin-slow" />
-              <div className="absolute inset-4 border border-dotted border-temple-gold/20 rounded-full animate-spin-reverse" />
-              <div className="absolute inset-8 border border-temple-amber/20 rounded-full animate-spin-slow" style={{ animationDuration: '20s' }} />
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center shrink-0 reveal-right">
+              <div className="absolute inset-0 border-2 border-temple-amber/20 rounded-full" />
+              <div className="absolute inset-4 border border-temple-amber/15 rounded-full" />
+              <div className="absolute inset-8 border border-temple-amber/10 rounded-full" />
               <div className="relative z-10 text-center">
-                <div className="text-5xl sm:text-6xl font-black text-temple-amber animate-breathe">40%</div>
-                <div className="text-lg font-bold text-white tracking-wider">OFF</div>
+                <div className="text-5xl sm:text-6xl font-black text-temple-amber">40%</div>
+                <div className="text-sm font-bold text-white/80 tracking-wider">OFF</div>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="temple-divider-ornate max-w-7xl mx-auto" />
-
         {/* ====== HERITAGE STORY SECTION ====== */}
-        <section id="heritage" className="py-16 sm:py-20 bg-temple-cream">
+        <section id="heritage" className="py-14 sm:py-16 bg-temple-cream">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="relative scroll-reveal-left">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl gopuram-shadow">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <div className="relative reveal-left">
+                <div className="relative rounded-2xl overflow-hidden shadow-xl">
                   <img src="/images/about-bg.png" alt="Temple heritage" width={600} height={400}
                     className="w-full h-auto object-cover" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-temple-maroon/60 to-transparent" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <div className="flex items-center gap-3">
-                      <DiyaFlame />
-                      <span className="text-temple-amber font-semibold text-sm">Since 1948</span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-temple-maroon/50 to-transparent" />
+                  <div className="absolute bottom-5 left-5">
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <div className="w-2 h-2 rounded-full bg-temple-amber" />
+                      <span className="text-white/90 font-medium text-xs">Since 1948</span>
                     </div>
                   </div>
                 </div>
                 {/* Floating stats */}
-                <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl p-4 border border-temple-gold/20 hidden sm:block">
+                <div className="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-lg p-3.5 border border-temple-gold/15 hidden sm:block">
                   <div className="text-center">
-                    <div className="text-2xl font-bold gold-text-static">75+</div>
-                    <div className="text-xs text-temple-gold">Years Legacy</div>
+                    <div className="text-xl font-bold gold-text-static">75+</div>
+                    <div className="text-[10px] text-temple-gold/70">Years Legacy</div>
                   </div>
                 </div>
-                <div className="absolute -top-4 -left-4 bg-white rounded-xl shadow-xl p-4 border border-temple-gold/20 hidden sm:block">
+                <div className="absolute -top-4 -left-4 bg-white rounded-xl shadow-lg p-3.5 border border-temple-gold/15 hidden sm:block">
                   <div className="text-center">
-                    <div className="text-2xl font-bold gold-text-static">500+</div>
-                    <div className="text-xs text-temple-gold">Temples Trust Us</div>
+                    <div className="text-xl font-bold gold-text-static">500+</div>
+                    <div className="text-[10px] text-temple-gold/70">Temples Trust Us</div>
                   </div>
                 </div>
               </div>
 
-              <div className="scroll-reveal-right">
-                <Badge className="bg-temple-deep/10 text-temple-deep border-temple-deep/20 mb-4">
+              <div className="reveal-right">
+                <Badge className="bg-temple-deep/8 text-temple-deep border-temple-deep/15 mb-3">
                   <Award className="w-3 h-3 mr-1" /> Our Heritage
                 </Badge>
-                <h2 className="text-3xl sm:text-4xl font-bold text-temple-deep mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-temple-deep mb-5">
                   A Legacy of <span className="gold-text-static">Sacred</span> Fragrance
                 </h2>
-                <div className="space-y-4 text-temple-deep/80 leading-relaxed">
+                <div className="space-y-3.5 text-temple-deep/75 text-sm leading-relaxed">
                   <p>
                     For over 75 years, Shri Fragrance has been the custodian of South India&apos;s most
                     sacred incense traditions. Our journey began in the ancient temples of Tamil Nadu,
@@ -736,15 +647,15 @@ export default function Home() {
                     same divine fragrance to your home pooja room.
                   </p>
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-8">
+                <div className="grid grid-cols-3 gap-3 mt-7">
                   {[
                     { icon: FlameKindling, label: 'Sacred Blends' },
                     { icon: Flower2, label: 'Natural Herbs' },
                     { icon: Sun, label: 'Sun-Dried' }
                   ].map((item, i) => (
-                    <div key={i} className="text-center p-3 rounded-lg bg-white border border-temple-gold/10">
-                      <item.icon className="w-6 h-6 text-temple-saffron mx-auto mb-2" />
-                      <span className="text-xs font-medium text-temple-deep">{item.label}</span>
+                    <div key={i} className="text-center p-3 rounded-lg bg-white border border-temple-gold/8">
+                      <item.icon className="w-5 h-5 text-temple-saffron mx-auto mb-1.5" />
+                      <span className="text-[11px] font-medium text-temple-deep">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -754,45 +665,38 @@ export default function Home() {
         </section>
 
         {/* ====== POOJA GUIDE SECTION ====== */}
-        <section id="pooja-guide" className="py-16 sm:py-20 bg-white/50 rangoli-dots">
+        <section id="pooja-guide" className="py-14 sm:py-16 bg-white/40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12 scroll-reveal">
-              <Badge className="bg-temple-saffron/10 text-temple-saffron border-temple-saffron/20 mb-4">
+            <div className="text-center mb-10 reveal-up">
+              <Badge className="bg-temple-saffron/8 text-temple-saffron border-temple-saffron/15 mb-3">
                 <Lamp className="w-3 h-3 mr-1" /> Sacred Guide
               </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-temple-deep mb-3">
+              <h2 className="text-2xl sm:text-3xl font-bold text-temple-deep mb-2">
                 The <span className="gold-text-static">Divine</span> Pooja Path
               </h2>
-              <p className="text-temple-gold max-w-2xl mx-auto">
-                Follow these sacred steps to create a blessed atmosphere in your home pooja room,
-                guided by ancient temple traditions.
+              <p className="text-sm text-temple-gold/80 max-w-lg mx-auto">
+                Follow these sacred steps to create a blessed atmosphere in your home pooja room.
               </p>
             </div>
 
-            {/* Steps */}
+            {/* Steps with connecting line */}
             <div className="relative">
-              {/* Connecting line */}
-              <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-[2px] bg-gradient-to-r from-temple-gold/20 via-temple-saffron/30 to-temple-gold/20" />
+              <div className="hidden lg:block absolute top-1/2 left-[8%] right-[8%] h-px bg-gradient-to-r from-temple-gold/10 via-temple-saffron/25 to-temple-gold/10" />
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-5">
                 {poojaSteps.map((step, i) => (
-                  <div key={step.step}
-                    className="scroll-reveal relative"
-                    style={{ transitionDelay: `${i * 0.12}s` }}>
-                    <div className="text-center p-6 rounded-xl bg-white border border-temple-gold/15 hover:shadow-xl hover:shadow-temple-gold/10 transition-all group">
-                      {/* Step number with diya */}
-                      <div className="relative mx-auto mb-4">
-                        <div className="w-16 h-16 rounded-full saffron-gradient flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                          <step.icon className="w-7 h-7 text-white" />
+                  <div key={step.step} className="reveal-up" style={{ transitionDelay: `${i * 100}ms` }}>
+                    <div className="text-center p-5 rounded-xl bg-white border border-temple-gold/10 hover:shadow-lg hover:border-temple-gold/20 transition-all duration-300 group">
+                      <div className="relative mx-auto mb-3">
+                        <div className="w-14 h-14 rounded-full saffron-gradient flex items-center justify-center mx-auto group-hover:scale-105 transition-transform duration-300">
+                          <step.icon className="w-6 h-6 text-white" />
                         </div>
-                        {/* Diya flame on top */}
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <DiyaFlame className="animate-diya" />
+                        <div className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-temple-deep text-white text-[9px] font-bold flex items-center justify-center">
+                          {step.step}
                         </div>
                       </div>
-                      <div className="text-xs font-bold text-temple-saffron mb-1">Step {step.step}</div>
-                      <h3 className="font-bold text-temple-deep text-lg mb-2">{step.title}</h3>
-                      <p className="text-xs text-temple-deep/60 leading-relaxed">{step.desc}</p>
+                      <h3 className="font-bold text-temple-deep text-sm mb-1">{step.title}</h3>
+                      <p className="text-[11px] text-temple-deep/50 leading-relaxed">{step.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -801,46 +705,36 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="temple-divider-ornate max-w-7xl mx-auto" />
-
         {/* ====== TESTIMONIALS ====== */}
-        <section className="py-16 bg-temple-cream">
+        <section className="py-14 sm:py-16 bg-temple-cream">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12 scroll-reveal">
-              <Badge className="bg-temple-gold/10 text-temple-gold border-temple-gold/20 mb-4">
+            <div className="text-center mb-10 reveal-up">
+              <Badge className="bg-temple-gold/8 text-temple-gold border-temple-gold/15 mb-3">
                 <Sparkles className="w-3 h-3 mr-1" /> Devotee Reviews
               </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-temple-deep">
+              <h2 className="text-2xl sm:text-3xl font-bold text-temple-deep">
                 Blessed by <span className="gold-text-static">Devotees</span>
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {testimonials.map((t, i) => (
-                <div key={i}
-                  className="scroll-reveal"
-                  style={{ transitionDelay: `${i * 0.12}s` }}>
-                  <Card className="h-full bg-white border-temple-gold/10 hover:shadow-xl hover:shadow-temple-gold/10 transition-all">
-                    <CardContent className="p-6">
-                      {/* Stars */}
-                      <div className="flex items-center gap-0.5 mb-4">
-                        {Array.from({ length: t.rating }).map((_, j) => (
-                          <Star key={j} className="w-4 h-4 fill-temple-amber text-temple-amber" />
+                <div key={i} className="reveal-up" style={{ transitionDelay: `${i * 100}ms` }}>
+                  <Card className="h-full bg-white border-temple-gold/8 hover:shadow-lg transition-all duration-300">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-0.5 mb-3">
+                        {Array.from({ length: t.rating }).map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-temple-amber text-temple-amber" />
                         ))}
                       </div>
-                      <p className="text-temple-deep/70 text-sm leading-relaxed mb-4 italic">
-                        &ldquo;{t.text}&rdquo;
-                      </p>
-                      <Separator className="mb-4 bg-temple-gold/10" />
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full saffron-gradient flex items-center justify-center text-white text-sm font-bold">
+                      <p className="text-sm text-temple-deep/70 leading-relaxed mb-4">&ldquo;{t.text}&rdquo;</p>
+                      <div className="flex items-center gap-3 pt-3 border-t border-temple-gold/8">
+                        <div className="w-9 h-9 rounded-full saffron-gradient flex items-center justify-center text-white text-xs font-bold">
                           {t.avatar}
                         </div>
                         <div>
-                          <p className="font-semibold text-temple-deep text-sm">{t.name}</p>
-                          <p className="text-xs text-temple-gold flex items-center gap-1">
-                            <MapPin className="w-3 h-3" /> {t.location}
-                          </p>
+                          <p className="text-sm font-semibold text-temple-deep">{t.name}</p>
+                          <p className="text-[11px] text-temple-gold/60">{t.location}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -851,282 +745,226 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ====== NEWSLETTER / CTA ====== */}
-        <section className="relative py-16 sm:py-20 overflow-hidden deep-maroon-gradient">
-          <FloatingParticles />
-          <MandalaDecor className="absolute -top-20 -right-20 w-80 h-80 opacity-10 animate-spin-slow" />
-
-          <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 text-center scroll-reveal">
-            {/* Diya decoration */}
-            <div className="flex justify-center mb-6 animate-float-slow">
-              <DiyaFlame />
-              <div className="w-8 h-3 bg-temple-brass rounded-full mt-1 mx-auto" />
+        {/* ====== NEWSLETTER ====== */}
+        <section id="contact" className="py-14 sm:py-16 deep-maroon-gradient">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+            <div className="reveal-up">
+              <Flame className="w-8 h-8 text-temple-amber mx-auto mb-4" />
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Stay Blessed with Sacred Updates
+              </h2>
+              <p className="text-sm text-white/60 mb-6">
+                Subscribe to receive exclusive offers, new fragrance launches, and sacred festival reminders.
+              </p>
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2 max-w-md mx-auto">
+                <Input
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-10 bg-white/10 border-white/15 text-white placeholder:text-white/40"
+                  type="email"
+                />
+                <Button type="submit"
+                  className="saffron-gradient text-white hover:brightness-110 px-5 h-10 font-semibold text-sm transition-all">
+                  Subscribe
+                </Button>
+              </form>
             </div>
-
-            <Badge className="bg-temple-amber/20 text-temple-amber border-temple-amber/30 mb-4">
-              <Flame className="w-3 h-3 mr-1" /> Stay Blessed
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-              Receive <span className="gold-text">Sacred Updates</span>
-            </h2>
-            <p className="text-temple-amber/80 mb-8 max-w-lg mx-auto">
-              Subscribe to receive exclusive offers, new fragrance launches, and seasonal
-              pooja tips delivered with devotion to your inbox.
-            </p>
-
-            <form onSubmit={handleNewsletterSubmit}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="flex-1 h-12 bg-white/10 border-temple-gold/30 text-white placeholder:text-white/40 focus:border-temple-amber"
-              />
-              <Button type="submit" size="lg"
-                className="saffron-gradient text-white hover:opacity-90 px-6 h-12 font-semibold">
-                <Flame className="w-4 h-4 mr-2" /> Subscribe
-              </Button>
-            </form>
-
-            <p className="text-xs text-white/40 mt-4">
-              🙏 We respect your privacy. Unsubscribe anytime.
-            </p>
           </div>
         </section>
 
         {/* ====== FOOTER ====== */}
-        <footer id="contact" className="bg-temple-deep text-temple-cream pt-16 pb-6">
+        <footer className="bg-temple-maroon pt-12 pb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-              {/* Column 1 - Logo & About */}
-              <div className="scroll-reveal">
-                <div className="flex items-center gap-3 mb-4">
-                  <img src="/images/logo.png" alt="Shri Fragrance" width={40} height={40} className="rounded-full" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+              {/* Brand */}
+              <div className="col-span-2 md:col-span-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <img src="/images/logo.png" alt="Logo" width={36} height={36} className="rounded-full" />
                   <div>
-                    <h3 className="text-lg font-bold gold-text-static">SHRI FRAGRANCE</h3>
-                    <p className="text-[10px] tracking-widest text-temple-saffron uppercase">Sacred Temple Agarbathi</p>
+                    <h3 className="font-bold text-white text-sm tracking-wider">SHRI FRAGRANCE</h3>
+                    <p className="text-[9px] text-temple-amber/60 tracking-wider">SACRED TEMPLE AGARBATHI</p>
                   </div>
                 </div>
-                <p className="text-sm text-temple-cream/60 leading-relaxed mb-4">
-                  Bringing divine fragrances from sacred temples to your home since 1948.
-                  Handcrafted with devotion, blessed by tradition.
+                <p className="text-xs text-white/40 leading-relaxed max-w-[200px]">
+                  Handcrafted with devotion, blessed in sacred temples, delivered to your home.
                 </p>
-                <div className="flex items-center gap-2">
-                  <DiyaFlame />
-                  <span className="text-xs text-temple-amber">Illuminating Homes Since 1948</span>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="font-semibold text-white text-xs tracking-wider mb-3">QUICK LINKS</h4>
+                <div className="space-y-2">
+                  {['Home', 'Collections', 'About Us', 'Pooja Guide'].map(link => (
+                    <a key={link} href="#" className="block text-xs text-white/40 hover:text-temple-amber transition-colors">{link}</a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Support */}
+              <div>
+                <h4 className="font-semibold text-white text-xs tracking-wider mb-3">SUPPORT</h4>
+                <div className="space-y-2">
+                  {['Track Order', 'Shipping Policy', 'Returns', 'FAQs'].map(link => (
+                    <a key={link} href="#" className="block text-xs text-white/40 hover:text-temple-amber transition-colors">{link}</a>
+                  ))}
                 </div>
               </div>
 
-              {/* Column 2 - Quick Links */}
-              <div className="scroll-reveal" style={{ transitionDelay: '0.1s' }}>
-                <h4 className="font-bold text-temple-amber mb-4 text-sm tracking-wider uppercase">Quick Links</h4>
-                <ul className="space-y-2">
-                  {[
-                    { label: 'Home', href: '#home' },
-                    { label: 'Our Collection', href: '#products' },
-                    { label: 'Heritage Story', href: '#heritage' },
-                    { label: 'Pooja Guide', href: '#pooja-guide' },
-                    { label: 'Contact Us', href: '#contact' }
-                  ].map(link => (
-                    <li key={link.label}>
-                      <Link href={link.href}
-                        className="text-sm text-temple-cream/60 hover:text-temple-amber transition-colors flex items-center gap-1.5">
-                        <ChevronRight className="w-3 h-3" /> {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Column 3 - Contact */}
-              <div className="scroll-reveal" style={{ transitionDelay: '0.2s' }}>
-                <h4 className="font-bold text-temple-amber mb-4 text-sm tracking-wider uppercase">Contact Us</h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2 text-sm text-temple-cream/60">
-                    <MapPin className="w-4 h-4 text-temple-saffron shrink-0 mt-0.5" />
-                    <span>123 Temple Road, Mylapore, Chennai, Tamil Nadu 600004</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-temple-cream/60">
-                    <Phone className="w-4 h-4 text-temple-saffron shrink-0" />
-                    <span>+91 98765 43210</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-temple-cream/60">
-                    <Mail className="w-4 h-4 text-temple-saffron shrink-0" />
-                    <span>info@shrifragrance.com</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-temple-cream/60">
-                    <Clock className="w-4 h-4 text-temple-saffron shrink-0" />
-                    <span>Mon - Sat: 9AM - 8PM IST</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Column 4 - Social & Payment */}
-              <div className="scroll-reveal" style={{ transitionDelay: '0.3s' }}>
-                <h4 className="font-bold text-temple-amber mb-4 text-sm tracking-wider uppercase">Follow Us</h4>
-                <div className="flex gap-3 mb-6">
-                  {['Facebook', 'Instagram', 'YouTube', 'Twitter'].map(social => (
-                    <Button key={social} variant="outline" size="icon"
-                      className="h-9 w-9 rounded-full border-temple-gold/30 text-temple-gold hover:bg-temple-gold/10 hover:text-temple-amber">
-                      <span className="text-xs font-bold">{social[0]}</span>
-                    </Button>
-                  ))}
-                </div>
-
-                <h4 className="font-bold text-temple-amber mb-3 text-sm tracking-wider uppercase">We Accept</h4>
-                <div className="flex flex-wrap gap-2">
-                  {['UPI', 'Visa', 'MC', 'RuPay', 'COD'].map(method => (
-                    <span key={method}
-                      className="px-2 py-1 text-[10px] font-medium bg-temple-cream/10 border border-temple-gold/20 rounded text-temple-cream/60">
-                      {method}
-                    </span>
-                  ))}
+              {/* Contact */}
+              <div>
+                <h4 className="font-semibold text-white text-xs tracking-wider mb-3">CONTACT</h4>
+                <div className="space-y-2 text-xs text-white/40">
+                  <span className="flex items-center gap-1.5"><Phone className="w-3 h-3" /> +91 98765 43210</span>
+                  <span className="flex items-center gap-1.5"><Mail className="w-3 h-3" /> info@shrifragrance.com</span>
+                  <span className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /> Chennai, Tamil Nadu</span>
                 </div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="temple-divider mb-6" />
-
-            {/* Bottom bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-temple-cream/40">
-              <p>&copy; {new Date().getFullYear()} Shri Fragrance. All rights reserved. Made with 🙏 in Chennai.</p>
-              <div className="flex items-center gap-4">
-                <span className="hover:text-temple-amber cursor-pointer transition-colors">Privacy Policy</span>
-                <span className="hover:text-temple-amber cursor-pointer transition-colors">Terms of Service</span>
-                <span className="hover:text-temple-amber cursor-pointer transition-colors">Refund Policy</span>
-              </div>
+            <div className="border-t border-white/8 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <p className="text-[11px] text-white/30">&copy; 2024 Shri Fragrance. All rights reserved.</p>
+              <p className="text-[11px] text-white/30">Handcrafted with devotion in South India</p>
             </div>
           </div>
         </footer>
       </main>
 
-      {/* ====== CART SIDEBAR ====== */}
+      {/* Scroll to Top */}
+      {showScrollTop && (
+        <button onClick={scrollToTop}
+          className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full saffron-gradient text-white shadow-lg flex items-center justify-center hover:brightness-110 transition-all"
+          style={{ animation: 'fade-in 0.2s ease-out' }}>
+          <ArrowUp className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* ====== CART SHEET ====== */}
       <Sheet open={cartOpen} onOpenChange={setCartOpen}>
-        <SheetContent className="w-full sm:max-w-md bg-temple-cream border-l border-temple-gold/20">
+        <SheetContent className="w-full sm:max-w-md bg-temple-cream">
           <SheetHeader>
             <SheetTitle className="text-temple-deep flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-temple-saffron" />
-              Your Sacred Cart ({cartCount})
+              <ShoppingCart className="w-5 h-5" /> Your Cart ({cartCount})
             </SheetTitle>
           </SheetHeader>
 
           {cart.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
-              <Flame className="w-16 h-16 text-temple-gold/20 mb-4" />
-              <p className="text-temple-deep/60 font-medium mb-1">Your cart is empty</p>
-              <p className="text-xs text-temple-gold/60">Add sacred fragrances to begin your journey</p>
+            <div className="flex-1 flex flex-col items-center justify-center py-16 text-temple-gold/50">
+              <ShoppingCart className="w-12 h-12 mb-3 opacity-30" />
+              <p className="text-sm">Your cart is empty</p>
+              <p className="text-xs mt-1">Add sacred fragrances to get started</p>
             </div>
           ) : (
-            <>
-              <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-4 py-4">
-                  {cart.map(item => (
-                    <div key={item.id} className="flex gap-3 p-3 bg-white rounded-lg border border-temple-gold/10">
-                      <div className="relative w-16 h-16 rounded-md overflow-hidden bg-temple-cream/50 shrink-0">
-                        <img src={item.image} alt={item.name} className="object-contain p-1 w-full h-full" loading="lazy" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-temple-deep text-sm truncate">{item.name}</h4>
-                        <p className="text-xs text-temple-gold/70">{item.fragrance}</p>
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-6 w-6 border-temple-gold/30"
-                              onClick={() => updateQuantity(item.id, -1)}>
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                            <Button variant="outline" size="icon" className="h-6 w-6 border-temple-gold/30"
-                              onClick={() => updateQuantity(item.id, 1)}>
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                          </div>
-                          <span className="font-bold text-temple-deep text-sm">₹{item.price * item.quantity}</span>
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                {cart.map(item => (
+                  <div key={item.id} className="flex gap-3 p-3 bg-white rounded-lg border border-temple-gold/8">
+                    <img src={item.image} alt={item.name} className="w-16 h-16 object-contain rounded bg-temple-cream/50 p-1" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm text-temple-deep truncate">{item.name}</h4>
+                      <p className="text-xs text-temple-gold/60">{item.fragrance}</p>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Button variant="outline" size="icon" className="h-6 w-6 border-temple-gold/20"
+                                            onClick={() => updateQuantity(item.id, -1)}>
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="text-xs font-medium w-5 text-center">{item.quantity}</span>
+                          <Button variant="outline" size="icon" className="h-6 w-6 border-temple-gold/20"
+                            onClick={() => updateQuantity(item.id, 1)}>
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-temple-deep">₹{item.price * item.quantity}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-temple-gold/40 hover:text-red-500"
+                            onClick={() => removeFromCart(item.id)}>
+                            <X className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-temple-gold/40 hover:text-red-500 shrink-0"
-                        onClick={() => removeFromCart(item.id)}>
-                        <X className="w-3 h-3" />
-                      </Button>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                  </div>
+                ))}
+              </div>
 
-              <div className="border-t border-temple-gold/20 pt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-temple-deep/60">Subtotal</span>
-                  <span className="font-bold text-temple-deep text-lg">₹{cartTotal}</span>
+              <div className="border-t border-temple-gold/10 pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-temple-gold/70">Subtotal</span>
+                  <span className="font-bold text-temple-deep">₹{cartTotal}</span>
                 </div>
-                <p className="text-xs text-temple-saffron flex items-center gap-1">
-                  <Truck className="w-3 h-3" /> {cartTotal >= 499 ? 'Free delivery included!' : `₹${499 - cartTotal} more for free delivery`}
-                </p>
-                <Button className="w-full saffron-gradient text-white hover:opacity-90 py-6 font-bold text-base">
-                  <Flame className="w-5 h-5 mr-2" /> Proceed to Checkout
+                <div className="flex justify-between text-xs">
+                  <span className="text-temple-gold/50">Shipping</span>
+                  <span className="text-temple-saffron font-medium">{cartTotal >= 499 ? 'FREE' : '₹49'}</span>
+                </div>
+                <Separator className="bg-temple-gold/10" />
+                <div className="flex justify-between">
+                  <span className="font-semibold text-temple-deep">Total</span>
+                  <span className="font-bold text-lg text-temple-deep">₹{cartTotal + (cartTotal >= 499 ? 0 : 49)}</span>
+                </div>
+                <Button className="w-full saffron-gradient text-white hover:brightness-110 font-semibold mt-2"
+                  onClick={() => { toast({ title: 'Order Placed!', description: 'Your sacred order has been placed successfully.' }); setCart([]); setCartOpen(false); }}>
+                  <Check className="w-4 h-4 mr-2" /> Checkout
                 </Button>
               </div>
-            </>
+            </div>
           )}
-          <SheetFooter />
         </SheetContent>
       </Sheet>
 
       {/* ====== QUICK VIEW DIALOG ====== */}
-      <Dialog open={!!quickViewProduct} onOpenChange={(open) => { if (!open) setQuickViewProduct(null) }}>
-        <DialogContent className="sm:max-w-lg bg-temple-cream border-temple-gold/20">
+      <Dialog open={!!quickViewProduct} onOpenChange={() => setQuickViewProduct(null)}>
+        <DialogContent className="sm:max-w-lg bg-temple-cream border-temple-gold/15">
           {quickViewProduct && (
             <>
               <DialogTitle className="sr-only">{quickViewProduct.name}</DialogTitle>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="relative aspect-square bg-white rounded-lg overflow-hidden">
-                  <img src={quickViewProduct.image} alt={quickViewProduct.name} className="object-contain p-6 w-full h-full" />
+              <div className="flex flex-col sm:flex-row gap-5">
+                <div className="sm:w-48 aspect-square bg-white rounded-lg p-4 border border-temple-gold/8">
+                  <img src={quickViewProduct.image} alt={quickViewProduct.name}
+                    className="w-full h-full object-contain" />
                 </div>
-                <div>
-                  <Badge className={`${quickViewProduct.badgeColor} text-xs mb-2`}>
+                <div className="flex-1">
+                  <Badge className={`${quickViewProduct.badgeColor} text-[10px] mb-2`}>
                     {quickViewProduct.badge}
                   </Badge>
                   <h3 className="text-xl font-bold text-temple-deep mb-1">{quickViewProduct.name}</h3>
-                  <p className="text-sm text-temple-gold/70 mb-2">{quickViewProduct.subtitle}</p>
-                  <div className="flex items-center gap-1 mb-3">
+                  <p className="text-sm text-temple-gold/60 mb-2">{quickViewProduct.subtitle}</p>
+
+                  <div className="flex items-center gap-1 mb-2">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`w-4 h-4 ${i < Math.floor(quickViewProduct.rating) ? 'fill-temple-amber text-temple-amber' : 'text-temple-gold/30'}`} />
+                      <Star key={i} className={`w-4 h-4 ${i < Math.floor(quickViewProduct.rating) ? 'fill-temple-amber text-temple-amber' : 'text-temple-gold/20'}`} />
                     ))}
-                    <span className="text-xs text-temple-gold/70 ml-1">({quickViewProduct.reviews} reviews)</span>
+                    <span className="text-xs text-temple-gold/50 ml-1">({quickViewProduct.reviews} reviews)</span>
                   </div>
-                  <p className="text-sm text-temple-saffron flex items-center gap-1 mb-4">
-                    <FlameKindling className="w-4 h-4" /> {quickViewProduct.fragrance}
+
+                  <p className="text-xs text-temple-saffron/70 flex items-center gap-1 mb-3">
+                    <FlameKindling className="w-3 h-3" /> {quickViewProduct.fragrance}
                   </p>
+
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-2xl font-bold text-temple-deep">₹{quickViewProduct.price}</span>
-                    <span className="text-base text-temple-gold/50 line-through">₹{quickViewProduct.originalPrice}</span>
-                    <Badge className="bg-temple-deep text-white text-xs">
-                      -{Math.round(((quickViewProduct.originalPrice - quickViewProduct.price) / quickViewProduct.originalPrice) * 100)}%
+                    <span className="text-sm text-temple-gold/40 line-through">₹{quickViewProduct.originalPrice}</span>
+                    <Badge className="bg-green-100 text-green-700 text-[10px]">
+                      {Math.round(((quickViewProduct.originalPrice - quickViewProduct.price) / quickViewProduct.originalPrice) * 100)}% OFF
                     </Badge>
                   </div>
-                  <Button onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null) }}
-                    className="w-full saffron-gradient text-white hover:opacity-90 font-semibold py-5">
-                    <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
-                  </Button>
+
+                  <div className="flex gap-2">
+                    <Button onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null) }}
+                      className="flex-1 saffron-gradient text-white hover:brightness-110 font-semibold">
+                      <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+                    </Button>
+                    <Button variant="outline" className="border-temple-gold/25"
+                      onClick={() => toggleWishlist(quickViewProduct.id)}>
+                      <Heart className={`w-4 h-4 ${wishlist.includes(quickViewProduct.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
-
-      {/* ====== SCROLL TO TOP ====== */}
-      {showScrollTop && (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full saffron-gradient text-white border-0 shadow-xl hover:opacity-90 animate-fade-in"
-        >
-          <ArrowUp className="w-5 h-5" />
-        </Button>
-      )}
     </div>
   )
 }
