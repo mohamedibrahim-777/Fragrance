@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import {
   ShoppingBag, Heart, Award, MapPin, User, Settings,
   ArrowLeft, Package, CheckCircle2, Truck,
@@ -843,11 +842,8 @@ export default function UserDashboard() {
       )}
 
       {/* ====== MAIN CONTENT ====== */}
-      <motion.main
-        className={`flex-1 transition-[margin] duration-300 ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+      <main
+        className={`flex-1 transition-[margin] duration-300 animate-fade-in ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}
       >
         {/* Profile Header */}
         <header className="relative overflow-hidden border-b border-temple-gold/20">
@@ -1009,7 +1005,7 @@ export default function UserDashboard() {
             </div>
           </>)}
         </div>
-      </motion.main>
+      </main>
 
       {/* ====== DIALOGS ====== */}
 

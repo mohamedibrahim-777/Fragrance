@@ -59,3 +59,22 @@ Stage Summary:
 - All pages (Homepage, Dashboard, Admin) return 200 through proxy
 - Server stability is a sandbox environment limitation - it kills idle background processes
 - Code is correct and functional when server is running
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: Fix My Account (dashboard) not working
+
+Work Log:
+- Identified root cause: Framer Motion `motion.main` with `initial={{ opacity: 0 }}` was keeping entire dashboard content invisible
+- The HTML rendered with `style="opacity:0"` on the main content wrapper, and if JS didn't load/execute, content stayed invisible
+- Replaced `motion.main` with plain `<main>` + CSS `animate-fade-in` class
+- Added `@keyframes fade-in` animation to globals.css
+- Added `.animate-fade-in` utility class to globals.css
+- Removed unused `motion` import from dashboard page (no longer needed)
+- Build succeeds, lint passes, all pages return 200
+
+Stage Summary:
+- Dashboard main content no longer starts at opacity:0
+- Content is now visible immediately with a smooth CSS fade-in animation
+- Framer Motion dependency removed from dashboard page (lighter, more reliable)
