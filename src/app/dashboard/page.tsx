@@ -733,7 +733,9 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-temple-cream">
       {/* ====== TOP NAV ====== */}
-      <header className="sticky top-0 z-50 deep-maroon-gradient border-b border-temple-gold/30 shadow-lg">
+      <header className="sticky top-0 z-50 deep-maroon-gradient border-b border-temple-gold/30 shadow-lg relative">
+        {/* Gold accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-temple-gold/60 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -764,9 +766,9 @@ export default function UserDashboard() {
       </header>
 
       {/* ====== PROFILE HEADER ====== */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden kolam-pattern">
         {/* Temple pattern background */}
-        <div className="absolute inset-0 rangoli-dots opacity-30" />
+        <div className="absolute inset-0 rangoli-dots opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-b from-temple-maroon/5 to-transparent" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
