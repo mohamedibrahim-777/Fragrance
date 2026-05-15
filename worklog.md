@@ -38,3 +38,24 @@ Stage Summary:
 - CSS class issues fixed in dashboard page
 - All pages render correctly
 - Dev server is stable when all pages are accessed
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Fix preview not opening - iframe security error and server stability
+
+Work Log:
+- Identified Chrome iframe security error blocking preview
+- Added X-Frame-Options: ALLOWALL and Content-Security-Policy: frame-ancestors headers to next.config.ts
+- Updated Caddyfile to pass through security headers via header_down directives
+- Created .zscripts/dev.sh for custom dev server startup
+- Verified all 3 pages return HTTP 200 through Caddy proxy (port 81)
+- Verified security headers are properly set on all pages
+- Production build succeeds with no errors
+- Lint passes with 0 errors
+
+Stage Summary:
+- iframe security headers added to allow embedding in preview panel
+- All pages (Homepage, Dashboard, Admin) return 200 through proxy
+- Server stability is a sandbox environment limitation - it kills idle background processes
+- Code is correct and functional when server is running
