@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   Flame, ShoppingCart, Heart, Star, Search, Menu, X, Minus, Plus,
@@ -128,17 +127,18 @@ const poojaSteps = [
 ]
 
 // ====== SUB-COMPONENTS ======
-function FloatingParticles() {
-  const particles = Array.from({ length: 20 }, (_, i) => ({
+function FloatingParticles({ count = 8 }: { count?: number }) {
+  // Reduced particle count for smooth scrolling
+  const particles = Array.from({ length: count }, (_, i) => ({
     id: i,
-    left: Math.random() * 100,
-    delay: Math.random() * 10,
-    duration: 8 + Math.random() * 12,
-    size: 2 + Math.random() * 4,
-    color: ['#C5972E', '#D4722A', '#FFD700', '#FFBF00'][Math.floor(Math.random() * 4)]
+    left: ((i * 13.7) % 100), // Deterministic positions (no Math.random on render)
+    delay: (i * 1.3) % 10,
+    duration: 10 + (i * 2.5) % 10,
+    size: 2 + (i % 3),
+    color: ['#C5972E', '#D4722A', '#FFD700', '#FFBF00'][i % 4]
   }))
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ contain: 'strict' }}>
       {particles.map(p => (
         <div key={p.id} className="particle" style={{
           left: `${p.left}%`, width: p.size, height: p.size,
@@ -351,7 +351,7 @@ export default function Home() {
           <div className="flex items-center justify-between py-3 gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
-              <Image src="/images/logo.png" alt="Shri Fragrance Logo" width={48} height={48} className="rounded-full" />
+              <img src="/images/logo.png" alt="Shri Fragrance Logo" width={48} height={48} className="rounded-full" />
               <div className="hidden sm:block">
                 <h1 className="text-lg font-bold tracking-wider gold-text-static">SHRI FRAGRANCE</h1>
                 <p className="text-[10px] tracking-widest text-temple-saffron uppercase">Sacred Temple Agarbathi</p>
@@ -433,19 +433,13 @@ export default function Home() {
         {/* ====== HERO SECTION ====== */}
         <section id="home" className="relative min-h-[90vh] flex items-center overflow-hidden">
           <div className="absolute inset-0">
-            <Image src="/images/hero-bg.png" alt="Temple background" fill className="object-cover" priority />
+            <img src="/images/hero-bg.png" alt="Temple background" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
             <div className="absolute inset-0 bg-gradient-to-r from-temple-maroon/90 via-temple-deep/80 to-temple-maroon/70" />
           </div>
-          <FloatingParticles />
-          <IncenseSmoke className="bottom-0 left-1/4 w-24" />
+          <FloatingParticles count={8} />
 
-          {/* Mandala decorations */}
+          {/* Mandala decoration - only one for performance */}
           <MandalaDecor className="absolute top-10 right-10 w-48 h-48 opacity-20 animate-spin-slow hidden lg:block" />
-          <MandalaDecor className="absolute bottom-10 left-10 w-64 h-64 opacity-15 animate-spin-reverse hidden lg:block" />
-
-          {/* Gopuram silhouettes */}
-          <GopuramSVG className="absolute right-4 bottom-0 h-60 opacity-10 hidden xl:block" />
-          <GopuramSVG className="absolute right-32 bottom-0 h-48 opacity-[0.07] hidden xl:block" />
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-20 w-full">
             <div className="max-w-3xl">
@@ -581,7 +575,7 @@ export default function Home() {
                     <Card className="card-artistic group bg-white border-temple-gold/10 overflow-hidden">
                       <div className="relative overflow-hidden">
                         <div className="relative aspect-square bg-temple-cream/50 p-6">
-                          <Image src={product.image} alt={product.name} fill className="object-contain p-4 group-hover:scale-110 transition-transform duration-500" />
+                          <img src={product.image} alt={product.name} loading="lazy" className="object-contain p-4 w-full h-full group-hover:scale-105 transition-transform duration-300" />
                         </div>
                         {/* Badge */}
                         <Badge className={`absolute top-3 left-3 ${product.badgeColor} text-xs font-semibold`}>
@@ -651,9 +645,8 @@ export default function Home() {
 
         {/* ====== SPECIAL OFFER BANNER ====== */}
         <section className="relative py-16 sm:py-20 overflow-hidden royal-gradient">
-          <FloatingParticles />
-          <MandalaDecor className="absolute -top-10 -left-10 w-72 h-72 opacity-10 animate-spin-slow" />
-          <MandalaDecor className="absolute -bottom-10 -right-10 w-72 h-72 opacity-10 animate-spin-reverse" />
+          {/* Minimal decorative elements for smooth scrolling */}
+          <div className="absolute -top-10 -left-10 w-72 h-72 border-2 border-dashed border-temple-amber/20 rounded-full animate-spin-slow" />
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="flex-1 text-center lg:text-left scroll-reveal-left">
@@ -695,8 +688,8 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="relative scroll-reveal-left">
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl gopuram-shadow">
-                  <Image src="/images/about-bg.png" alt="Temple heritage" width={600} height={400}
-                    className="w-full h-auto object-cover" />
+                  <img src="/images/about-bg.png" alt="Temple heritage" width={600} height={400}
+                    className="w-full h-auto object-cover" loading="lazy" />
                   <div className="absolute inset-0 bg-gradient-to-t from-temple-maroon/60 to-transparent" />
                   <div className="absolute bottom-6 left-6 right-6">
                     <div className="flex items-center gap-3">
@@ -910,7 +903,7 @@ export default function Home() {
               {/* Column 1 - Logo & About */}
               <div className="scroll-reveal">
                 <div className="flex items-center gap-3 mb-4">
-                  <Image src="/images/logo.png" alt="Shri Fragrance" width={40} height={40} className="rounded-full" />
+                  <img src="/images/logo.png" alt="Shri Fragrance" width={40} height={40} className="rounded-full" />
                   <div>
                     <h3 className="text-lg font-bold gold-text-static">SHRI FRAGRANCE</h3>
                     <p className="text-[10px] tracking-widest text-temple-saffron uppercase">Sacred Temple Agarbathi</p>
@@ -1033,7 +1026,7 @@ export default function Home() {
                   {cart.map(item => (
                     <div key={item.id} className="flex gap-3 p-3 bg-white rounded-lg border border-temple-gold/10">
                       <div className="relative w-16 h-16 rounded-md overflow-hidden bg-temple-cream/50 shrink-0">
-                        <Image src={item.image} alt={item.name} fill className="object-contain p-1" />
+                        <img src={item.image} alt={item.name} className="object-contain p-1 w-full h-full" loading="lazy" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-temple-deep text-sm truncate">{item.name}</h4>
@@ -1088,7 +1081,7 @@ export default function Home() {
               <DialogTitle className="sr-only">{quickViewProduct.name}</DialogTitle>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="relative aspect-square bg-white rounded-lg overflow-hidden">
-                  <Image src={quickViewProduct.image} alt={quickViewProduct.name} fill className="object-contain p-6" />
+                  <img src={quickViewProduct.image} alt={quickViewProduct.name} className="object-contain p-6 w-full h-full" />
                 </div>
                 <div>
                   <Badge className={`${quickViewProduct.badgeColor} text-xs mb-2`}>

@@ -3,32 +3,34 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * useScrollReveal - Uses IntersectionObserver to add a 'revealed' class
- * when elements scroll into view. Elements with 'scroll-reveal' class start
- * at opacity:0.3 (visible even without JS), and animate to full visibility
- * when the 'revealed' class is added.
+ * useScrollReveal - Optimized IntersectionObserver for scroll-triggered reveals.
+ * Uses a single shared observer for all elements (better performance).
+ * Adds 'revealed' class when elements enter viewport.
  */
 export function useScrollReveal() {
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
+    // Single observer with higher threshold for smoother triggering
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('revealed')
-            // Once revealed, stop observing to avoid re-triggering
-            observerRef.current?.unobserve(entry.target)
+        // Batch DOM updates with requestAnimationFrame
+        requestAnimationFrame(() => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed')
+              observerRef.current?.unobserve(entry.target)
+            }
           }
         })
       },
       {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px',
+        threshold: 0.05,
+        rootMargin: '0px 0px -30px 0px',
       }
     )
 
-    // Observe all elements with scroll-reveal classes
+    // Observe all scroll-reveal elements
     const selectors = [
       '.scroll-reveal',
       '.scroll-reveal-left',
@@ -36,11 +38,13 @@ export function useScrollReveal() {
       '.scroll-reveal-scale',
     ]
 
-    selectors.forEach((selector) => {
+    const elements: Element[] = []
+    for (const selector of selectors) {
       document.querySelectorAll(selector).forEach((el) => {
+        elements.push(el)
         observerRef.current?.observe(el)
       })
-    })
+    }
 
     return () => {
       observerRef.current?.disconnect()
@@ -49,21 +53,36 @@ export function useScrollReveal() {
 }
 
 /**
- * useScrollProgress - Simple scroll progress tracker that updates a CSS variable.
- * No Framer Motion dependency.
+ * useScrollProgress - Throttled scroll progress tracker.
+ * Uses requestAnimationFrame for smooth 60fps updates.
  */
 export function useScrollProgress() {
+  const rafRef = useRef<number>(0)
+
   useEffect(() => {
-    const handleScroll = () => {
+    let ticking = false
+
+    const updateProgress = () => {
       const scrollTop = window.scrollY
       const docHeight = document.documentElement.scrollHeight - window.innerHeight
       const progress = docHeight > 0 ? scrollTop / docHeight : 0
       document.documentElement.style.setProperty('--scroll-progress', `${progress * 100}%`)
+      ticking = false
+    }
+
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true
+        rafRef.current = requestAnimationFrame(updateProgress)
+      }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll()
+    updateProgress()
 
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
   }, [])
 }

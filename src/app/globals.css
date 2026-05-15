@@ -131,6 +131,20 @@
   }
 }
 
+/* ====== GPU ACCELERATION ====== */
+/* Force GPU compositing for animated elements to prevent jank */
+.gpu-accel {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* ====== SMOOTH SCROLLING ====== */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ====== TEMPLE DECORATIVE PATTERNS ====== */
 
 .temple-border {
@@ -250,61 +264,36 @@
 }
 ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #B8860B, #C5972E); }
 
-/* ====== KEYFRAME ANIMATIONS ====== */
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-8px) rotate(1deg); }
-  75% { transform: translateY(-4px) rotate(-1deg); }
-}
+/* ====== KEYFRAME ANIMATIONS (OPTIMIZED) ====== */
+/* All animations use transform/opacity only for GPU compositing */
 
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -12px, 0); }
 }
 
 @keyframes incense-smoke {
-  0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
-  30% { opacity: 0.6; transform: translateY(-15px) scaleX(1); }
-  60% { opacity: 0.3; transform: translateY(-30px) scaleX(1.3); }
-  100% { opacity: 0; transform: translateY(-50px) scaleX(1.6); }
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scaleX(0.8); }
+  30% { opacity: 0.4; transform: translate3d(0, -15px, 0) scaleX(1); }
+  60% { opacity: 0.2; transform: translate3d(0, -30px, 0) scaleX(1.2); }
+  100% { opacity: 0; transform: translate3d(0, -50px, 0) scaleX(1.4); }
 }
 
 @keyframes glow-pulse {
   0%, 100% { box-shadow: 0 0 5px rgba(197, 151, 46, 0.4), 0 0 10px rgba(197, 151, 46, 0.1); }
-  50% { box-shadow: 0 0 20px rgba(197, 151, 46, 0.8), 0 0 40px rgba(197, 151, 46, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(197, 151, 46, 0.6), 0 0 30px rgba(197, 151, 46, 0.2); }
 }
 
 @keyframes diya-flicker {
-  0%, 100% { opacity: 1; transform: scale(1); filter: brightness(1); }
-  25% { opacity: 0.85; transform: scale(0.97); filter: brightness(0.9); }
-  50% { opacity: 1; transform: scale(1.02); filter: brightness(1.1); }
-  75% { opacity: 0.9; transform: scale(0.99); filter: brightness(0.95); }
+  0%, 100% { opacity: 1; transform: scale3d(1, 1, 1); }
+  25% { opacity: 0.85; transform: scale3d(0.97, 0.97, 1); }
+  50% { opacity: 1; transform: scale3d(1.02, 1.02, 1); }
+  75% { opacity: 0.9; transform: scale3d(0.99, 0.99, 1); }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-up-fade {
-  from { opacity: 0; transform: translateY(60px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-60px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(60px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translate3d(0, 40px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes spin-slow {
@@ -329,71 +318,40 @@
 }
 
 @keyframes particle-float {
-  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  0% { transform: translate3d(0, 100vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translate3d(0, -10vh, 0) rotate(360deg); opacity: 0; }
 }
 
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-@keyframes ripple {
-  0% { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes border-dance {
-  0% { border-color: #C5972E; }
-  25% { border-color: #D4722A; }
-  50% { border-color: #8B1A1A; }
-  75% { border-color: #D4722A; }
-  100% { border-color: #C5972E; }
-}
-
-@keyframes text-reveal {
-  0% { clip-path: inset(0 100% 0 0); }
-  100% { clip-path: inset(0 0% 0 0); }
+  0%, 100% { transform: scale3d(1, 1, 1); }
+  50% { transform: scale3d(1.05, 1.05, 1); }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 /* ====== ANIMATION UTILITY CLASSES ====== */
 
-.animate-float { animation: float 4s ease-in-out infinite; }
-.animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
-.animate-smoke { animation: incense-smoke 3s ease-out infinite; }
+.animate-float-slow { animation: float-slow 6s ease-in-out infinite; will-change: transform; }
+.animate-smoke { animation: incense-smoke 3s ease-out infinite; will-change: transform, opacity; }
 .animate-glow { animation: glow-pulse 2s ease-in-out infinite; }
-.animate-diya { animation: diya-flicker 1.5s ease-in-out infinite; }
+.animate-diya { animation: diya-flicker 1.5s ease-in-out infinite; will-change: transform, opacity; }
 .animate-slide-up { animation: slide-up 0.7s ease-out forwards; }
-.animate-slide-up-fade { animation: slide-up-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-in-left { animation: slide-in-left 0.7s ease-out forwards; }
-.animate-slide-in-right { animation: slide-in-right 0.7s ease-out forwards; }
-.animate-scale-in { animation: scale-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-spin-slow { animation: spin-slow 30s linear infinite; }
-.animate-spin-reverse { animation: spin-reverse 25s linear infinite; }
+.animate-spin-slow { animation: spin-slow 30s linear infinite; will-change: transform; }
+.animate-spin-reverse { animation: spin-reverse 25s linear infinite; will-change: transform; }
 .animate-shimmer { animation: gold-shimmer 3s linear infinite; }
 .animate-gradient { animation: gradient-shift 6s ease infinite; }
-.animate-marquee { animation: marquee 30s linear infinite; }
-.animate-ripple { animation: ripple 1.5s ease-out; }
-.animate-breathe { animation: breathe 4s ease-in-out infinite; }
-.animate-border-dance { animation: border-dance 3s ease-in-out infinite; }
-.animate-text-reveal { animation: text-reveal 1s ease-out forwards; }
+.animate-marquee { animation: marquee 30s linear infinite; will-change: transform; }
+.animate-breathe { animation: breathe 4s ease-in-out infinite; will-change: transform; }
 .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
 
 /* Staggered animation delays */
@@ -404,100 +362,54 @@
 .stagger-5 { animation-delay: 0.5s; }
 .stagger-6 { animation-delay: 0.6s; }
 
-/* ====== SCROLL REVEAL (Safe for Static Export) ====== */
-/* Elements start at opacity:0.3 so they're visible even if JS fails.
-   When IntersectionObserver adds 'revealed', they animate to full visibility. */
+/* ====== SCROLL REVEAL (GPU Optimized) ====== */
+/* Elements start visible. IntersectionObserver adds 'revealed' for smooth entry. */
 
 .scroll-reveal {
   opacity: 1;
-  transform: none;
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal:not(.revealed) {
-  opacity: 0.3;
-  transform: translateY(20px);
+  opacity: 0.15;
+  transform: translate3d(0, 16px, 0);
 }
 
 .scroll-reveal-left {
   opacity: 1;
-  transform: none;
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal-left:not(.revealed) {
-  opacity: 0.3;
-  transform: translateX(-30px);
+  opacity: 0.15;
+  transform: translate3d(-20px, 0, 0);
 }
 
 .scroll-reveal-right {
   opacity: 1;
-  transform: none;
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal-right:not(.revealed) {
-  opacity: 0.3;
-  transform: translateX(30px);
+  opacity: 0.15;
+  transform: translate3d(20px, 0, 0);
 }
 
 .scroll-reveal-scale {
   opacity: 1;
-  transform: none;
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal-scale:not(.revealed) {
-  opacity: 0.3;
-  transform: scale(0.95);
+  opacity: 0.15;
+  transform: translate3d(0, 0, 0) scale(0.97);
 }
 
-/* Legacy reveal classes (kept for reference - these use opacity:0) */
-.reveal-on-scroll {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-on-scroll.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.reveal-left {
-  opacity: 0;
-  transform: translateX(-60px);
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-left.is-visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.reveal-right {
-  opacity: 0;
-  transform: translateX(60px);
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-right.is-visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.reveal-scale {
-  opacity: 0;
-  transform: scale(0.85);
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-scale.is-visible {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* ====== SCROLL PROGRESS BAR (CSS-only) ====== */
+/* ====== SCROLL PROGRESS BAR ====== */
 
 .scroll-progress-bar {
   position: fixed;
@@ -509,18 +421,21 @@
   background-size: 400% 400%;
   animation: gradient-shift 6s ease infinite;
   width: var(--scroll-progress, 0%);
-  transition: width 0.1s linear;
+  will-change: width;
+  transition: width 50ms linear;
 }
 
-/* ====== PARTICLE SYSTEM ====== */
+/* ====== PARTICLE SYSTEM (Optimized - GPU only) ====== */
 
 .particle {
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   animation: particle-float linear infinite;
   pointer-events: none;
+  will-change: transform, opacity;
+  contain: layout style paint;
 }
 
 /* ====== ARTISTIC CARD STYLES ====== */
@@ -528,7 +443,8 @@
 .card-artistic {
   position: relative;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform;
 }
 
 .card-artistic::before {
@@ -538,8 +454,8 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.08), transparent);
-  transition: left 0.6s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.06), transparent);
+  transition: left 0.5s ease;
   z-index: 1;
 }
 
@@ -548,52 +464,8 @@
 }
 
 .card-artistic:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 60px rgba(197, 151, 46, 0.2), 0 0 0 1px rgba(197, 151, 46, 0.3);
-}
-
-/* ====== DECORATIVE MANDALA SVG CONTAINER ====== */
-
-.mandala-spinner {
-  position: relative;
-}
-
-.mandala-spinner::before,
-.mandala-spinner::after {
-  content: '';
-  position: absolute;
-  inset: -20px;
-  border-radius: 50%;
-  border: 1px dashed rgba(197, 151, 46, 0.2);
-}
-
-.mandala-spinner::before {
-  animation: spin-slow 30s linear infinite;
-}
-
-.mandala-spinner::after {
-  inset: -35px;
-  border-style: dotted;
-  animation: spin-reverse 40s linear infinite;
-}
-
-/* ====== INCENSE SMOKE EFFECT ====== */
-
-.smoke-trail {
-  position: relative;
-}
-
-.smoke-trail::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  width: 20px;
-  height: 40px;
-  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.15), transparent);
-  filter: blur(8px);
-  animation: incense-smoke 3s ease-out infinite;
-  transform-origin: bottom center;
+  transform: translate3d(0, -6px, 0);
+  box-shadow: 0 16px 40px rgba(197, 151, 46, 0.15), 0 0 0 1px rgba(197, 151, 46, 0.2);
 }
 
 /* ====== ORNATE BORDER STYLE ====== */

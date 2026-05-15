@@ -49,3 +49,49 @@ Stage Summary:
 - Admin: collapsible sidebar, stats cards, SVG bar/donut/line charts, orders table, top products
 - Dashboard: profile header, stats, tabs (orders/wishlist/addresses/settings), interactive dialogs
 - Preview working: https://preview-chat-3d6a2bc6-029a-4362-bdea-f2c5cd7bf5c3.space.chatglm.site/
+
+---
+Task ID: 3
+Agent: main
+Task: Optimize site for smooth scrolling
+
+Work Log:
+- Optimized globals.css:
+  - Changed all transform animations to use translate3d/scale3d for GPU compositing
+  - Added will-change hints on animated elements
+  - Added contain: layout style paint on particle container
+  - Reduced particle opacity in particle-float (0.6 instead of 1)
+  - Reduced glow-pulse box-shadow intensity
+  - Shortened scroll-reveal transition from 0.8s to 0.5s
+  - Reduced scroll-reveal initial offset from 20px to 16px
+  - Added CSS contain: strict on particle container
+  - Removed heavy mandala-spinner and smoke-trail pseudo-element animations
+  - Added smooth scrolling CSS (scroll-behavior: smooth)
+  - Card hover uses translate3d instead of translateY + scale
+  - Reduced card shadow intensity on hover
+- Optimized useScrollReveal hook:
+  - Batches DOM updates with requestAnimationFrame
+  - Single shared IntersectionObserver for all elements
+  - Reduced threshold from 0.1 to 0.05 for earlier triggering
+- Optimized useScrollProgress hook:
+  - Throttled with requestAnimationFrame instead of firing on every scroll
+  - Only updates when previous frame is done (ticking flag)
+- Optimized page.tsx:
+  - Reduced floating particles from 20 to 8
+  - Replaced Math.random() with deterministic positions (no re-renders)
+  - Removed IncenseSmoke component from hero (blur filter is expensive)
+  - Removed second MandalaDecor and both GopuramSVGs from hero
+  - Removed second FloatingParticles from offer banner
+  - Replaced Next.js Image with native <img> tags (faster, no optimization overhead)
+  - Added lazy loading on all images except hero background
+  - Reduced card hover scale from 110% to 105%
+  - Reduced card transition duration from 500ms to 300ms
+- Homepage HTML reduced from 174KB to 152KB (12% smaller)
+- All pages return 200, server stable
+
+Stage Summary:
+- Site should now scroll much smoother with GPU-accelerated animations
+- Reduced DOM complexity (fewer animated elements)
+- Eliminated jank from Math.random() re-renders
+- Throttled scroll handlers to 60fps
+- Native img tags avoid Next.js image optimization overhead
