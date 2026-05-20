@@ -2,18 +2,46 @@ import { prisma } from "@/lib/db";
 import { parseImages } from "@/lib/utils";
 import { ProductCard } from "@/components/ProductCard";
 import { ShopFilters } from "./ShopFilters";
+import { PriceFilter } from "./PriceFilter";
 
 export const dynamic = "force-dynamic";
+
+function parseBound(v: string | undefined): number | undefined {
+  if (v === undefined) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { cat?: string; sort?: string };
+  searchParams: { cat?: string; sort?: string; min?: string; max?: string };
 }) {
   const activeCat = searchParams.cat ?? "all";
   const sort = searchParams.sort ?? "new";
+  const min = parseBound(searchParams.min);
+  const max = parseBound(searchParams.max);
 
-  const [categories, products] = await Promise.all([
+  const priceWhere =
+    min !== undefined || max !== undefined
+      ? {
+          price: {
+            ...(min !== undefined ? { gte: min } : {}),
+            ...(max !== undefined ? { lte: max } : {}),
+          },
+        }
+      : {};
+
+  const prismaOrderBy =
+    sort === "price-asc"
+      ? { price: "asc" as const }
+      : sort === "price-desc"
+      ? { price: "desc" as const }
+      : sort === "name"
+      ? { name: "asc" as const }
+      : { createdAt: "desc" as const };
+
+  const [categories, productsRaw] = await Promise.all([
     prisma.category.findMany({
       where: { parentId: { not: null }, isActive: true },
       orderBy: { name: "asc" },
@@ -22,19 +50,22 @@ export default async function ProductsPage({
     prisma.product.findMany({
       where: {
         isActive: true,
-        ...(activeCat !== "all"
-          ? { category: { slug: activeCat } }
-          : {}),
+        ...(activeCat !== "all" ? { category: { slug: activeCat } } : {}),
+        ...priceWhere,
       },
       include: { category: { select: { name: true, slug: true } } },
-      orderBy:
-        sort === "price-asc"
-          ? { price: "asc" }
-          : sort === "price-desc"
-          ? { price: "desc" }
-          : { createdAt: "desc" },
+      orderBy: prismaOrderBy,
     }),
   ]);
+
+  const products =
+    sort === "discount"
+      ? [...productsRaw].sort((a, b) => {
+          const da = a.mrp > 0 ? (a.mrp - a.price) / a.mrp : 0;
+          const db = b.mrp > 0 ? (b.mrp - b.price) / b.mrp : 0;
+          return db - da;
+        })
+      : productsRaw;
 
   const allCats = [{ slug: "all", name: "All" }, ...categories];
 
@@ -67,12 +98,16 @@ export default async function ProductsPage({
         <ShopFilters categories={allCats} active={activeCat} />
       </header>
 
+      <PriceFilter />
+
       {/* Sort bar */}
-      <div className="mb-6 flex items-center justify-end gap-3">
+      <div className="mb-6 flex items-center justify-end gap-3 flex-wrap">
         <span className="text-[10px] uppercase tracking-[0.3em] text-tertiary/60">Sort</span>
-        <SortLink current={sort} value="new" label="Newest" activeCat={activeCat} />
-        <SortLink current={sort} value="price-asc" label="Price ↑" activeCat={activeCat} />
-        <SortLink current={sort} value="price-desc" label="Price ↓" activeCat={activeCat} />
+        <SortLink current={sort} value="new" label="Newest" sp={searchParams} />
+        <SortLink current={sort} value="price-asc" label="Price ↑" sp={searchParams} />
+        <SortLink current={sort} value="price-desc" label="Price ↓" sp={searchParams} />
+        <SortLink current={sort} value="name" label="Name A–Z" sp={searchParams} />
+        <SortLink current={sort} value="discount" label="Discount %" sp={searchParams} />
       </div>
 
       {products.length === 0 ? (
@@ -110,15 +145,17 @@ function SortLink({
   current,
   value,
   label,
-  activeCat,
+  sp,
 }: {
   current: string;
   value: string;
   label: string;
-  activeCat: string;
+  sp: { cat?: string; sort?: string; min?: string; max?: string };
 }) {
   const qs = new URLSearchParams();
-  if (activeCat !== "all") qs.set("cat", activeCat);
+  if (sp.cat && sp.cat !== "all") qs.set("cat", sp.cat);
+  if (sp.min) qs.set("min", sp.min);
+  if (sp.max) qs.set("max", sp.max);
   if (value !== "new") qs.set("sort", value);
   const href = `/products${qs.toString() ? `?${qs.toString()}` : ""}`;
   const active = current === value;
