@@ -7,9 +7,9 @@ export default function ContactPage() {
         shop? Reach us anytime.
       </p>
       <p>
-        ✉ <strong>hello@shri.local</strong> (demo)
+        ✉ <a href="mailto:melwinanto77@gmail.com"><strong>melwinanto77@gmail.com</strong></a>
         <br />
-        📞 <strong>+91 90000 00000</strong> (demo · 9 AM – 7 PM IST)
+        📞 <a href="tel:+916369109974"><strong>+91 63691 09974</strong></a> (9 AM – 7 PM IST)
       </p>
       <h2>Visit</h2>
       <p>

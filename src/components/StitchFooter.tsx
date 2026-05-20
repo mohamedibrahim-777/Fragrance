@@ -59,8 +59,8 @@ export function StitchFooter() {
           </h4>
           <ul className="space-y-2 text-sm">
             <li><Link href="/contact" className="text-on-surface-variant hover:text-tertiary transition-colors">Contact Priest</Link></li>
-            <li><a href="mailto:hello@shrifragrance.in" className="text-on-surface-variant hover:text-tertiary transition-colors">hello@shrifragrance.in</a></li>
-            <li><span className="text-on-surface-variant">+91 98400 00000</span></li>
+            <li><a href="mailto:melwinanto77@gmail.com" className="text-on-surface-variant hover:text-tertiary transition-colors">melwinanto77@gmail.com</a></li>
+            <li><a href="tel:+916369109974" className="text-on-surface-variant hover:text-tertiary transition-colors">+91 63691 09974</a></li>
             <li><span className="text-on-surface-variant">Salem, Tamil Nadu</span></li>
           </ul>
           <div className="mt-4 flex gap-2">
@@ -70,7 +70,7 @@ export function StitchFooter() {
             <a aria-label="Facebook" href="https://facebook.com" target="_blank" rel="noopener" className="brass-medallion !w-9 !h-9">
               <span className="material-symbols-outlined text-[16px]">thumb_up</span>
             </a>
-            <a aria-label="WhatsApp" href="https://wa.me/919840000000" target="_blank" rel="noopener" className="brass-medallion !w-9 !h-9">
+            <a aria-label="WhatsApp" href="https://wa.me/916369109974" target="_blank" rel="noopener" className="brass-medallion !w-9 !h-9">
               <span className="material-symbols-outlined text-[16px]">chat</span>
             </a>
           </div>
