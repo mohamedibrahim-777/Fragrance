@@ -28,6 +28,7 @@ import {
   BarChart2, PieChart, Activity, TrendingUp as TrendIcon,
   UserPlus, Shield, Lock, BellRing, Globe, Palette,
 } from "lucide-react";
+import { adminProductsSeed as productsList, ADMIN_PRODUCTS_KEY } from "@/lib/catalog";
 
 // ── Color Palette ──────────────────────────────────────
 const colors = {
@@ -89,16 +90,6 @@ const customerAnalytics = [
   { month: "Nov", new: 270, returning: 620 }, { month: "Dec", new: 300, returning: 680 },
 ];
 
-const productsList = [
-  { id: 1, name: "Javathu", category: "Floral", price: "₹299", stock: 200, status: "Active", sales: 187, rating: 4.8 },
-  { id: 2, name: "Jasmine", category: "Floral", price: "₹249", stock: 250, status: "Active", sales: 256, rating: 4.9 },
-  { id: 3, name: "Champa", category: "Floral", price: "₹279", stock: 180, status: "Active", sales: 198, rating: 4.7 },
-  { id: 4, name: "Lavender", category: "Herbal", price: "₹269", stock: 160, status: "Active", sales: 142, rating: 4.6 },
-  { id: 5, name: "Screw Pine", category: "Floral", price: "₹319", stock: 120, status: "Active", sales: 124, rating: 4.5 },
-  { id: 6, name: "Rose", category: "Floral", price: "₹259", stock: 220, status: "Active", sales: 213, rating: 4.8 },
-  { id: 7, name: "Sandal", category: "Premium", price: "₹399", stock: 140, status: "Active", sales: 287, rating: 4.9 },
-  { id: 8, name: "Sacred Resin", category: "Premium", price: "₹499", stock: 90, status: "Active", sales: 156, rating: 4.9 },
-];
 
 const customersList = [
   { id: 1, name: "Rajesh Kumar", email: "rajesh@email.com", orders: 12, spent: "₹18,450", location: "Chennai", joined: "Jan 2023", status: "Active" },
@@ -409,7 +400,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     try {
-      const p = localStorage.getItem("shri:admin:products");
+      const p = localStorage.getItem(ADMIN_PRODUCTS_KEY);
       if (p) setProducts(JSON.parse(p));
     } catch {}
     refreshOrders();
@@ -421,7 +412,7 @@ export default function AdminDashboard() {
 
   const persistProducts = useCallback((list: AdminProduct[]) => {
     setProducts(list);
-    try { localStorage.setItem("shri:admin:products", JSON.stringify(list)); } catch {}
+    try { localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(list)); } catch {}
   }, []);
 
   const handleDeleteProduct = useCallback((id: number) => {

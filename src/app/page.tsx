@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast'
 import { loadCart, saveCart, type CartLine } from '@/lib/cart'
 import { addOrder } from '@/lib/orders'
 import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from '@/lib/auth'
+import { loadAdminCatalog } from '@/lib/catalog'
 import { LogOut, LogIn } from 'lucide-react'
 
 // ====== TYPES ======
@@ -49,72 +50,42 @@ interface CartItem extends Product {
 }
 
 // ====== DATA ======
-const products: Product[] = [
-  {
-    id: 1, name: 'Javathu', subtitle: 'Temple • Floral',
-    fragrance: 'Rich, distinctive devotional fragrance',
-    description: "A rich devotional aroma reflecting Tamil Nadu's aromatic heritage. Deep and traditional, it helps you connect with cultural roots and adds a meaningful spiritual touch.",
-    price: 299, originalPrice: 399, image: '/images/product1.png',
-    category: 'Floral', badge: 'Heritage',
-    badgeColor: 'bg-temple-maroon text-white', rating: 4.8, reviews: 187,
-  },
-  {
-    id: 2, name: 'Jasmine', subtitle: 'Temple • Floral',
-    fragrance: 'Fresh, floral jasmine aroma',
-    description: "A fresh, floral jasmine aroma inspired by the garlands of Tamil temples. It fills the space with festive and spiritual warmth, perfect for celebrations, rituals, and family gatherings.",
-    price: 249, originalPrice: 349, image: '/images/product2.png',
-    category: 'Floral', badge: 'Bestseller',
-    badgeColor: 'bg-temple-saffron text-white', rating: 4.9, reviews: 256,
-  },
-  {
-    id: 3, name: 'Champa', subtitle: 'Temple • Floral',
-    fragrance: 'Traditional temple floral scent',
-    description: "A traditional temple fragrance carrying the essence of South Indian shrines. Its nostalgic floral notes reflect ancient Tamil heritage, making it ideal for puja and festive home ambience.",
-    price: 279, originalPrice: 379, image: '/images/product3.png',
-    category: 'Floral', badge: 'Classic',
-    badgeColor: 'bg-temple-deep text-white', rating: 4.7, reviews: 198,
-  },
-  {
-    id: 4, name: 'Lavender', subtitle: 'Temple • Floral',
-    fragrance: 'Calming and soothing aromatic notes',
-    description: "A calming, soothing scent crafted to bring peace and clarity. Perfect for meditation, yoga spaces, and bedtime rituals, blending herbal purity with gentle lavender notes.",
-    price: 269, originalPrice: 369, image: '/images/product4.png',
-    category: 'Herbal', badge: 'Calming',
-    badgeColor: 'bg-emerald-600 text-white', rating: 4.6, reviews: 142,
-  },
-  {
-    id: 5, name: 'Screw Pine', subtitle: 'Temple • Floral',
-    fragrance: 'Delicate, unique floral aroma',
-    description: "A delicate, unique floral fragrance inspired by sacred screw pine blossoms. Its culturally rooted aroma offers a true temple-like experience for traditional scent lovers.",
-    price: 319, originalPrice: 449, image: '/images/product5.png',
-    category: 'Floral', badge: 'Unique',
-    badgeColor: 'bg-green-700 text-white', rating: 4.5, reviews: 124,
-  },
-  {
-    id: 6, name: 'Rose', subtitle: 'Temple • Floral',
-    fragrance: 'Soft, devotional floral fragrance',
-    description: "A soft devotional aroma reminiscent of divine rose garlands. Ideal for daily puja, meditation, and feminine spiritual spaces, creating a serene and soothing ambience.",
-    price: 259, originalPrice: 359, image: '/images/product6.png',
-    category: 'Floral', badge: 'Devotional',
-    badgeColor: 'bg-temple-ruby text-white', rating: 4.8, reviews: 213,
-  },
-  {
-    id: 7, name: 'Sandal', subtitle: 'Temple • Floral',
-    fragrance: 'Classic woody, sacred aroma',
-    description: "A classic sacred woody fragrance revered in Vedic rituals. Its pure sandal aroma enhances focus and clarity, perfect for homams, poojas, and deep spiritual practice.",
-    price: 399, originalPrice: 549, image: '/images/product1.png',
-    category: 'Premium', badge: 'Sacred',
-    badgeColor: 'bg-temple-saffron text-white', rating: 4.9, reviews: 287,
-  },
-  {
-    id: 8, name: 'Sacred Resin', subtitle: 'Temple • Floral',
-    fragrance: 'Resinous temple-style fragrance',
-    description: "A rich temple-style resin fragrance known for its purifying qualities. It creates a sacred ceremonial aura, perfect for rituals, archana, and cleansing the spiritual environment.",
-    price: 499, originalPrice: 699, image: '/images/product3.png',
-    category: 'Premium', badge: 'Premium',
-    badgeColor: 'bg-temple-amber text-white', rating: 4.9, reviews: 156,
-  },
-]
+
+// Read the admin-managed catalog from localStorage and shape it into the
+// homepage Product type. Returns an empty array on the server so SSR/CSR match.
+function parsePriceToNumber(value: unknown): number {
+  if (typeof value === 'number') return value
+  if (typeof value !== 'string') return 0
+  const n = parseInt(value.replace(/[^\d]/g, ''), 10)
+  return Number.isFinite(n) ? n : 0
+}
+function loadAdminProducts(): Product[] {
+  return loadAdminCatalog().map((p) => {
+    const price = parsePriceToNumber(p.price)
+    const badge =
+      p.status === 'Out of Stock' ? 'Out of Stock' :
+      p.status === 'Low Stock' ? 'Low Stock' :
+      'Available'
+    const badgeColor =
+      p.status === 'Out of Stock' ? 'bg-red-500 text-white' :
+      p.status === 'Low Stock' ? 'bg-amber-500 text-white' :
+      'bg-temple-saffron text-white'
+    return {
+      id: p.id,
+      name: p.name,
+      subtitle: p.category ?? 'Catalog',
+      fragrance: p.category ?? '',
+      price,
+      originalPrice: Math.max(price, Math.round(price * 1.35)),
+      image: p.image || '/images/product1.png',
+      category: p.category || 'Others',
+      badge,
+      badgeColor,
+      rating: p.rating ?? 4.5,
+      reviews: p.sales ?? 0,
+    }
+  })
+}
 
 const testimonials = [
   {
@@ -356,6 +327,15 @@ export default function Home() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [email, setEmail] = useState('')
+  // Catalog comes from the admin panel only (shri:admin:products localStorage).
+  // Empty on SSR + first render so hydration matches; populated after mount.
+  const [products, setProducts] = useState<Product[]>([])
+  useEffect(() => {
+    const refresh = () => setProducts(loadAdminProducts())
+    refresh()
+    window.addEventListener('storage', refresh)
+    return () => window.removeEventListener('storage', refresh)
+  }, [])
 
   // Scroll detection with throttling
   useEffect(() => {
@@ -377,25 +357,41 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // IntersectionObserver for section reveals
+  // IntersectionObserver for section reveals. A MutationObserver watches
+  // for nodes added later (e.g. product cards rendered after the catalog
+  // loads) and attaches the IntersectionObserver to them too.
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    const selectors = ['section[id]', '.reveal-up', '.reveal-left', '.reveal-right', '.reveal-scale']
+    const selectorList = selectors.join(',')
+
+    const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('revealed')
-          }
+          if (entry.isIntersecting) entry.target.classList.add('revealed')
         }
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' },
     )
 
-    const selectors = ['section[id]', '.reveal-up', '.reveal-left', '.reveal-right', '.reveal-scale']
-    selectors.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => observer.observe(el))
-    })
+    const observe = (root: ParentNode) => {
+      root.querySelectorAll(selectorList).forEach(el => io.observe(el))
+    }
+    observe(document)
 
-    return () => observer.disconnect()
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        m.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) {
+            const el = node as Element
+            if (el.matches?.(selectorList)) io.observe(el)
+            observe(el)
+          }
+        })
+      }
+    })
+    mo.observe(document.body, { childList: true, subtree: true })
+
+    return () => { io.disconnect(); mo.disconnect() }
   }, [])
 
   // Cart functions
@@ -785,7 +781,7 @@ export default function Home() {
             <div className="mb-10 reveal-up">
               <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
                 <TabsList className="flex w-full sm:w-auto sm:mx-auto justify-start sm:justify-center flex-nowrap overflow-x-auto h-auto gap-1.5 bg-white/60 border border-temple-gold/10 p-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {['All', 'Floral', 'Herbal', 'Premium'].map(cat => (
+                  {(['All', ...Array.from(new Set(products.map(p => p.category)))]).map(cat => (
                     <TabsTrigger key={cat} value={cat}
                       style={activeCategory === cat ? {
                         background: 'linear-gradient(135deg, #D4722A 0%, #C5972E 50%, #D4722A 100%)',
@@ -886,7 +882,11 @@ export default function Home() {
             {filteredProducts.length === 0 && (
               <div className="text-center py-16">
                 <CircleDot className="w-10 h-10 text-temple-gold/20 mx-auto mb-3" />
-                <p className="text-temple-gold/50">No products found matching your search.</p>
+                <p className="text-temple-gold/50">
+                  {products.length === 0
+                    ? 'No products yet — add some from the admin panel.'
+                    : 'No products match your search.'}
+                </p>
               </div>
             )}
           </div>

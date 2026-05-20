@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { addToStoredCart, type CartLine } from '@/lib/cart'
+import { loadAdminCatalog } from '@/lib/catalog'
 
 interface CollectionProduct {
   id: number
@@ -36,77 +37,11 @@ interface CollectionProduct {
   rating: number
   reviews?: number
   stock?: number
-  source: 'curated' | 'admin'
+  source: 'admin'
 }
 
 // Curated catalog mirrors the homepage hero collection so the dedicated
 // /collection view is fully populated even before admin adds products.
-const curated: CollectionProduct[] = [
-  {
-    id: 1001, name: 'Javathu', subtitle: 'Temple • Floral',
-    fragrance: 'Rich, distinctive devotional fragrance',
-    description: "A rich devotional aroma reflecting Tamil Nadu's aromatic heritage. Deep and traditional, it helps you connect with cultural roots and adds a meaningful spiritual touch.",
-    price: 299, originalPrice: 399, image: '/images/product1.png',
-    category: 'Floral', badge: 'Heritage',
-    badgeColor: 'bg-temple-maroon text-white', rating: 4.8, reviews: 187, source: 'curated',
-  },
-  {
-    id: 1002, name: 'Jasmine', subtitle: 'Temple • Floral',
-    fragrance: 'Fresh, floral jasmine aroma',
-    description: "A fresh, floral jasmine aroma inspired by the garlands of Tamil temples. It fills the space with festive and spiritual warmth, perfect for celebrations, rituals, and family gatherings.",
-    price: 249, originalPrice: 349, image: '/images/product2.png',
-    category: 'Floral', badge: 'Bestseller',
-    badgeColor: 'bg-temple-saffron text-white', rating: 4.9, reviews: 256, source: 'curated',
-  },
-  {
-    id: 1003, name: 'Champa', subtitle: 'Temple • Floral',
-    fragrance: 'Traditional temple floral scent',
-    description: "A traditional temple fragrance carrying the essence of South Indian shrines. Its nostalgic floral notes reflect ancient Tamil heritage, making it ideal for puja and festive home ambience.",
-    price: 279, originalPrice: 379, image: '/images/product3.png',
-    category: 'Floral', badge: 'Classic',
-    badgeColor: 'bg-temple-deep text-white', rating: 4.7, reviews: 198, source: 'curated',
-  },
-  {
-    id: 1004, name: 'Lavender', subtitle: 'Temple • Floral',
-    fragrance: 'Calming and soothing aromatic notes',
-    description: "A calming, soothing scent crafted to bring peace and clarity. Perfect for meditation, yoga spaces, and bedtime rituals, blending herbal purity with gentle lavender notes.",
-    price: 269, originalPrice: 369, image: '/images/product4.png',
-    category: 'Herbal', badge: 'Calming',
-    badgeColor: 'bg-emerald-600 text-white', rating: 4.6, reviews: 142, source: 'curated',
-  },
-  {
-    id: 1005, name: 'Screw Pine', subtitle: 'Temple • Floral',
-    fragrance: 'Delicate, unique floral aroma',
-    description: "A delicate, unique floral fragrance inspired by sacred screw pine blossoms. Its culturally rooted aroma offers a true temple-like experience for traditional scent lovers.",
-    price: 319, originalPrice: 449, image: '/images/product5.png',
-    category: 'Floral', badge: 'Unique',
-    badgeColor: 'bg-green-700 text-white', rating: 4.5, reviews: 124, source: 'curated',
-  },
-  {
-    id: 1006, name: 'Rose', subtitle: 'Temple • Floral',
-    fragrance: 'Soft, devotional floral fragrance',
-    description: "A soft devotional aroma reminiscent of divine rose garlands. Ideal for daily puja, meditation, and feminine spiritual spaces, creating a serene and soothing ambience.",
-    price: 259, originalPrice: 359, image: '/images/product6.png',
-    category: 'Floral', badge: 'Devotional',
-    badgeColor: 'bg-temple-ruby text-white', rating: 4.8, reviews: 213, source: 'curated',
-  },
-  {
-    id: 1007, name: 'Sandal', subtitle: 'Temple • Floral',
-    fragrance: 'Classic woody, sacred aroma',
-    description: "A classic sacred woody fragrance revered in Vedic rituals. Its pure sandal aroma enhances focus and clarity, perfect for homams, poojas, and deep spiritual practice.",
-    price: 399, originalPrice: 549, image: '/images/product1.png',
-    category: 'Premium', badge: 'Sacred',
-    badgeColor: 'bg-temple-saffron text-white', rating: 4.9, reviews: 287, source: 'curated',
-  },
-  {
-    id: 1008, name: 'Sacred Resin', subtitle: 'Temple • Floral',
-    fragrance: 'Resinous temple-style fragrance',
-    description: "A rich temple-style resin fragrance known for its purifying qualities. It creates a sacred ceremonial aura, perfect for rituals, archana, and cleansing the spiritual environment.",
-    price: 499, originalPrice: 699, image: '/images/product3.png',
-    category: 'Premium', badge: 'Premium',
-    badgeColor: 'bg-temple-amber text-white', rating: 4.9, reviews: 156, source: 'curated',
-  },
-]
 
 // Parse "₹1,890" → 1890. Admin stores price as a string.
 function parsePrice(value: unknown): number {
@@ -116,25 +51,9 @@ function parsePrice(value: unknown): number {
   return Number.isFinite(n) ? n : 0
 }
 
-interface AdminProductRaw {
-  id: number
-  name: string
-  category?: string
-  price?: string | number
-  stock?: number
-  status?: string
-  sales?: number
-  rating?: number
-  image?: string
-}
-
 function loadAdminProducts(): CollectionProduct[] {
   try {
-    const raw = localStorage.getItem('shri:admin:products')
-    if (!raw) return []
-    const arr = JSON.parse(raw) as AdminProductRaw[]
-    if (!Array.isArray(arr)) return []
-    return arr.map((p) => ({
+    return loadAdminCatalog().map((p) => ({
       id: 2000 + (p.id ?? 0),
       name: p.name ?? 'Unnamed',
       subtitle: p.category ?? 'Catalog',
@@ -177,7 +96,7 @@ export default function CollectionPage() {
   }, [])
 
   const allProducts = useMemo<CollectionProduct[]>(
-    () => [...adminProducts, ...curated],
+    () => adminProducts,
     [adminProducts],
   )
 
@@ -269,9 +188,9 @@ export default function CollectionPage() {
             <span className="px-3 py-1 rounded-full border border-temple-gold/25 bg-white">
               {categories.length - 1} categories
             </span>
-            {hydrated && adminProducts.length > 0 && (
+            {hydrated && adminProducts.length === 0 && (
               <span className="px-3 py-1 rounded-full border border-temple-saffron/30 bg-temple-saffron/5 text-temple-saffron">
-                {adminProducts.length} from admin
+                No products yet — add some from /admin
               </span>
             )}
           </div>
