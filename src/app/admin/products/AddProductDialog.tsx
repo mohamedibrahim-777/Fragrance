@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Plus, X } from "lucide-react";
 
 type Category = { id: string; slug: string; name: string };
@@ -321,8 +322,14 @@ export function ImageInput({
               key={`${u}-${i}`}
               className="relative h-16 w-16 overflow-hidden rounded border border-border bg-surface-2"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={u} alt="" className="h-full w-full object-cover" />
+              <Image
+                src={u}
+                alt=""
+                fill
+                sizes="64px"
+                unoptimized
+                className="object-cover"
+              />
               <button
                 type="button"
                 onClick={() => removeAt(i)}

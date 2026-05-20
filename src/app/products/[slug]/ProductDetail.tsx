@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useCart, useWishlist, useAuth } from "@/lib/store";
-import { formatINR } from "@/lib/utils";
+import { formatINR, SOLID_DARK } from "@/lib/utils";
 
 type Product = {
   id: string;
@@ -71,12 +72,18 @@ export function ProductDetail({ product }: { product: Product }) {
       {/* Image Section (Left Split) */}
       <div className="md:col-span-6">
         <div className="relative rounded-full overflow-hidden shadow-[0_0_40px_rgba(217,119,7,0.15)] border border-outline-variant/30 aspect-[3/4]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            alt={product.name}
-            className="w-full h-full object-cover"
-            src={product.images[activeImg] ?? ""}
-          />
+          {product.images[activeImg] && (
+            <Image
+              alt={product.name}
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              placeholder="blur"
+              blurDataURL={SOLID_DARK}
+              priority
+              className="object-cover"
+              src={product.images[activeImg]}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-surface-container-highest/90 to-transparent backdrop-blur-sm">
             <div className="flex gap-2 flex-wrap">
@@ -106,8 +113,15 @@ export function ProductDetail({ product }: { product: Product }) {
                     : "border-outline-variant/40"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img} alt="" className="h-full w-full object-cover" />
+                <Image
+                  src={img}
+                  alt=""
+                  width={64}
+                  height={64}
+                  placeholder="blur"
+                  blurDataURL={SOLID_DARK}
+                  className="h-full w-full object-cover"
+                />
               </button>
             ))}
           </div>

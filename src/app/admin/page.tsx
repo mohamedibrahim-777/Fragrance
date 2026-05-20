@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
-import { formatINR, parseImages } from "@/lib/utils";
+import { formatINR, parseImages, SOLID_DARK } from "@/lib/utils";
 import {
   IndianRupee,
   Package,
@@ -101,10 +102,13 @@ export default async function AdminDashboard() {
                 return (
                   <li key={t.productId} className="flex items-center gap-3">
                     {img && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={img}
                         alt=""
+                        width={48}
+                        height={48}
+                        placeholder="blur"
+                        blurDataURL={SOLID_DARK}
                         className="h-12 w-12 flex-shrink-0 rounded-lg object-cover"
                       />
                     )}

@@ -22,6 +22,10 @@ export function parseImages(json: string): string[] {
   }
 }
 
+// 1x1 dark pixel (#1a120a) matching site background — shared blur placeholder
+export const SOLID_DARK =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNgYGD4DwABBAEAfbLI3wAAAABJRU5ErkJggg==";
+
 export function parseFeatures(json: string): string[] {
   try {
     const arr = JSON.parse(json);

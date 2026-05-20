@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Trash2, ShoppingCart } from "lucide-react";
 import { useWishlist, useCart } from "@/lib/store";
-import { formatINR } from "@/lib/utils";
+import { formatINR, SOLID_DARK } from "@/lib/utils";
 
 export default function WishlistPage() {
   const items = useWishlist((s) => s.items);
@@ -53,13 +54,18 @@ export default function WishlistPage() {
             className="rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
           >
             <Link href={`/products/${p.slug}`} className="block">
-              <div className="aspect-square overflow-hidden rounded-xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                />
+              <div className="relative aspect-square overflow-hidden rounded-xl">
+                {p.image && (
+                  <Image
+                    src={p.image}
+                    alt={p.name}
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    placeholder="blur"
+                    blurDataURL={SOLID_DARK}
+                    className="object-cover transition duration-500 hover:scale-105"
+                  />
+                )}
               </div>
               <h3 className="mt-3 line-clamp-2 text-[15px] font-semibold leading-tight text-white">
                 {p.name}

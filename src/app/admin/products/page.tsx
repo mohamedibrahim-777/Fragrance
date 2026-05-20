@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
-import { formatINR, parseImages } from "@/lib/utils";
+import { formatINR, parseImages, SOLID_DARK } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 import {
   RefreshButton,
@@ -59,8 +60,15 @@ export default async function AdminProducts() {
                   <tr key={p.id} className="border-b border-border last:border-0 hover:bg-surface-2/30">
                     <td className="py-3 pl-4 pr-3">
                       {img && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                        <Image
+                          src={img}
+                          alt=""
+                          width={40}
+                          height={40}
+                          placeholder="blur"
+                          blurDataURL={SOLID_DARK}
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
                       )}
                     </td>
                     <td className="py-3 pr-3">

@@ -3,6 +3,7 @@ import { Manrope, Noto_Serif, Catamaran } from "next/font/google";
 import { SiteNavbar, SiteFooter, SiteMobileFooter } from "@/components/SiteChrome";
 import { AuthSync } from "@/components/AuthSync";
 import { TempleBackdrop } from "@/components/TempleBackdrop";
+import { PageTransition } from "@/components/PageTransition";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -52,7 +53,7 @@ export default function RootLayout({
         <AuthSync />
         <TempleBackdrop />
         <SiteNavbar />
-        <main className="flex-grow">{children}</main>
+        <main className="flex-grow"><PageTransition>{children}</PageTransition></main>
         <SiteFooter />
         <SiteMobileFooter />
       </body>

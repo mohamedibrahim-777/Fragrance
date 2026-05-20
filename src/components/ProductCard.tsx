@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCart, useWishlist } from "@/lib/store";
-import { formatINR } from "@/lib/utils";
+import { formatINR, SOLID_DARK } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 type Props = {
@@ -55,12 +56,18 @@ export function ProductCard({
         <Link href={`/products/${slug}`} className="contents">
           <div className="w-full md:w-3/5 h-1/2 md:h-full relative overflow-hidden bg-black">
             <div className="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent z-10 md:bg-gradient-to-r md:from-surface-container-highest md:via-surface-container-highest/50 md:to-transparent opacity-90" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt={name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out [transform:translateZ(0)] will-change-transform"
-              src={image}
-            />
+            {image && (
+              <Image
+                alt={name}
+                fill
+                sizes="(min-width: 768px) 60vw, 100vw"
+                placeholder="blur"
+                blurDataURL={SOLID_DARK}
+                priority={featured}
+                className="object-cover group-hover:scale-105 transition-transform duration-300 ease-out [transform:translateZ(0)] will-change-transform"
+                src={image}
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-tr from-secondary-container/10 to-transparent mix-blend-overlay z-10" />
           </div>
           <div className="w-full md:w-2/5 p-gutter flex flex-col justify-center relative z-20">
@@ -106,12 +113,17 @@ export function ProductCard({
       <Link href={`/products/${slug}`} className="contents">
         <div className="w-full h-3/5 relative overflow-hidden bg-black border-b border-outline-variant/30">
           <div className="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent z-10 opacity-80" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out [transform:translateZ(0)] will-change-transform"
-            src={image}
-          />
+          {image && (
+            <Image
+              alt={name}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              placeholder="blur"
+              blurDataURL={SOLID_DARK}
+              className="object-cover group-hover:scale-105 transition-transform duration-300 ease-out [transform:translateZ(0)] will-change-transform"
+              src={image}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-tr from-secondary-container/5 to-transparent mix-blend-overlay z-10" />
           {off > 0 && (
             <span className="absolute top-3 left-3 z-20 px-3 py-1 bg-surface-container-lowest text-tertiary rounded-sm font-label-sm text-label-sm uppercase shadow-[inset_0_1px_0_rgba(255,255,255,0.05),_0_2px_4px_rgba(0,0,0,0.5)] border-t border-l border-outline-variant/30 border-b border-r border-black">

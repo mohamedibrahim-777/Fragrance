@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/lib/store";
-import { formatINR } from "@/lib/utils";
+import { formatINR, SOLID_DARK } from "@/lib/utils";
 
 export default function CartPage() {
   const items = useCart((s) => s.items);
@@ -77,12 +78,17 @@ export default function CartPage() {
                     <circle cx="9" cy="3" r="1" />
                     <circle cx="3" cy="9" r="1" />
                   </svg>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-full w-full object-cover"
-                  />
+                  {item.image && (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="96px"
+                      placeholder="blur"
+                      blurDataURL={SOLID_DARK}
+                      className="object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col">
                   <Link
