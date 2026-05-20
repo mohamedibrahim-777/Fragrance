@@ -30,6 +30,7 @@ interface Product {
   name: string
   subtitle: string
   fragrance: string
+  description?: string
   price: number
   originalPrice: number
   image: string
@@ -47,41 +48,69 @@ interface CartItem extends Product {
 // ====== DATA ======
 const products: Product[] = [
   {
-    id: 1, name: 'Chandanam Sandalwood', subtitle: 'Premium Temple Grade',
-    fragrance: 'Rich Sandalwood & Cedar', price: 349, originalPrice: 499,
-    image: '/images/product1.png', category: 'Premium', badge: 'Bestseller',
-    badgeColor: 'bg-temple-saffron text-white', rating: 4.8, reviews: 234
+    id: 1, name: 'Javathu', subtitle: 'Temple • Floral',
+    fragrance: 'Rich, distinctive devotional fragrance',
+    description: "A rich devotional aroma reflecting Tamil Nadu's aromatic heritage. Deep and traditional, it helps you connect with cultural roots and adds a meaningful spiritual touch.",
+    price: 299, originalPrice: 399, image: '/images/product1.png',
+    category: 'Floral', badge: 'Heritage',
+    badgeColor: 'bg-temple-maroon text-white', rating: 4.8, reviews: 187,
   },
   {
-    id: 2, name: 'Malligai Jasmine', subtitle: 'Divine Floral Essence',
-    fragrance: 'Pure Jasmine & Rose', price: 249, originalPrice: 399,
-    image: '/images/product2.png', category: 'Floral', badge: 'New',
-    badgeColor: 'bg-emerald-600 text-white', rating: 4.6, reviews: 156
+    id: 2, name: 'Jasmine', subtitle: 'Temple • Floral',
+    fragrance: 'Fresh, floral jasmine aroma',
+    description: "A fresh, floral jasmine aroma inspired by the garlands of Tamil temples. It fills the space with festive and spiritual warmth, perfect for celebrations, rituals, and family gatherings.",
+    price: 249, originalPrice: 349, image: '/images/product2.png',
+    category: 'Floral', badge: 'Bestseller',
+    badgeColor: 'bg-temple-saffron text-white', rating: 4.9, reviews: 256,
   },
   {
-    id: 3, name: 'Nag Champa', subtitle: 'Timeless Sacred Blend',
-    fragrance: 'Nag Champa & Sandalwood', price: 299, originalPrice: 449,
-    image: '/images/product3.png', category: 'Classic', badge: 'Divine',
-    badgeColor: 'bg-temple-deep text-white', rating: 4.9, reviews: 312
+    id: 3, name: 'Champa', subtitle: 'Temple • Floral',
+    fragrance: 'Traditional temple floral scent',
+    description: "A traditional temple fragrance carrying the essence of South Indian shrines. Its nostalgic floral notes reflect ancient Tamil heritage, making it ideal for puja and festive home ambience.",
+    price: 279, originalPrice: 379, image: '/images/product3.png',
+    category: 'Floral', badge: 'Classic',
+    badgeColor: 'bg-temple-deep text-white', rating: 4.7, reviews: 198,
   },
   {
-    id: 4, name: 'Rose Pushpam', subtitle: 'Sacred Floral Offering',
-    fragrance: 'Damask Rose & Palmarosa', price: 279, originalPrice: 399,
-    image: '/images/product4.png', category: 'Floral', badge: 'Sacred',
-    badgeColor: 'bg-temple-maroon text-white', rating: 4.7, reviews: 189
+    id: 4, name: 'Lavender', subtitle: 'Temple • Floral',
+    fragrance: 'Calming and soothing aromatic notes',
+    description: "A calming, soothing scent crafted to bring peace and clarity. Perfect for meditation, yoga spaces, and bedtime rituals, blending herbal purity with gentle lavender notes.",
+    price: 269, originalPrice: 369, image: '/images/product4.png',
+    category: 'Herbal', badge: 'Calming',
+    badgeColor: 'bg-emerald-600 text-white', rating: 4.6, reviews: 142,
   },
   {
-    id: 5, name: 'Sambrani Heritage', subtitle: 'Traditional Healing',
-    fragrance: 'Sambrani & Neem', price: 399, originalPrice: 549,
-    image: '/images/product5.png', category: 'Herbal', badge: 'Herbal',
-    badgeColor: 'bg-green-700 text-white', rating: 4.5, reviews: 167
+    id: 5, name: 'Screw Pine', subtitle: 'Temple • Floral',
+    fragrance: 'Delicate, unique floral aroma',
+    description: "A delicate, unique floral fragrance inspired by sacred screw pine blossoms. Its culturally rooted aroma offers a true temple-like experience for traditional scent lovers.",
+    price: 319, originalPrice: 449, image: '/images/product5.png',
+    category: 'Floral', badge: 'Unique',
+    badgeColor: 'bg-green-700 text-white', rating: 4.5, reviews: 124,
   },
   {
-    id: 6, name: 'Oudh Divine', subtitle: 'Premium Arabian Oudh',
-    fragrance: 'Oudh & Amber Resin', price: 599, originalPrice: 899,
-    image: '/images/product6.png', category: 'Premium', badge: 'Luxury',
-    badgeColor: 'bg-temple-ruby text-white', rating: 4.9, reviews: 198
-  }
+    id: 6, name: 'Rose', subtitle: 'Temple • Floral',
+    fragrance: 'Soft, devotional floral fragrance',
+    description: "A soft devotional aroma reminiscent of divine rose garlands. Ideal for daily puja, meditation, and feminine spiritual spaces, creating a serene and soothing ambience.",
+    price: 259, originalPrice: 359, image: '/images/product6.png',
+    category: 'Floral', badge: 'Devotional',
+    badgeColor: 'bg-temple-ruby text-white', rating: 4.8, reviews: 213,
+  },
+  {
+    id: 7, name: 'Sandal', subtitle: 'Temple • Floral',
+    fragrance: 'Classic woody, sacred aroma',
+    description: "A classic sacred woody fragrance revered in Vedic rituals. Its pure sandal aroma enhances focus and clarity, perfect for homams, poojas, and deep spiritual practice.",
+    price: 399, originalPrice: 549, image: '/images/product1.png',
+    category: 'Premium', badge: 'Sacred',
+    badgeColor: 'bg-temple-saffron text-white', rating: 4.9, reviews: 287,
+  },
+  {
+    id: 8, name: 'Sacred Resin', subtitle: 'Temple • Floral',
+    fragrance: 'Resinous temple-style fragrance',
+    description: "A rich temple-style resin fragrance known for its purifying qualities. It creates a sacred ceremonial aura, perfect for rituals, archana, and cleansing the spiritual environment.",
+    price: 499, originalPrice: 699, image: '/images/product3.png',
+    category: 'Premium', badge: 'Premium',
+    badgeColor: 'bg-temple-amber text-white', rating: 4.9, reviews: 156,
+  },
 ]
 
 const testimonials = [
@@ -576,14 +605,14 @@ export default function Home() {
               </div>
 
               <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-6 leading-[1.08]">
-                From Sacred<br />
-                <span className="gold-text">Temples</span> to<br />
-                Your Home
+                Shri Agarbathi<br />
+                <span className="gold-text">Premium Quality</span><br />
+                Sacred Origins
               </h2>
 
               <p className="text-base sm:text-lg text-white/65 mb-10 max-w-lg leading-relaxed">
-                Experience divine fragrances handcrafted with devotion, using sacred ingredients
-                sourced from ancient temple traditions across South India.
+                Crafted to capture the sacred ambience, spiritual depth, and timeless fragrance
+                traditions of South Indian temples — bringing their serene essence into every moment.
               </p>
 
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 mb-10 sm:mb-16">
@@ -606,7 +635,7 @@ export default function Home() {
               {/* Stats */}
               <div className="flex gap-8 sm:gap-14">
                 {[
-                  { value: 50, suffix: '+', label: 'Sacred Fragrances' },
+                  { value: 8, suffix: '', label: 'Sacred Fragrances' },
                   { value: 75, suffix: '+', label: 'Years of Tradition' },
                   { value: 500, suffix: 'K+', label: 'Happy Families' }
                 ].map((stat, i) => (
@@ -690,7 +719,7 @@ export default function Home() {
             <div className="mb-10 reveal-up">
               <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
                 <TabsList className="flex w-full sm:w-auto sm:mx-auto justify-start sm:justify-center flex-nowrap overflow-x-auto h-auto gap-1.5 bg-white/60 border border-temple-gold/10 p-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {['All', 'Premium', 'Floral', 'Classic', 'Herbal'].map(cat => (
+                  {['All', 'Floral', 'Herbal', 'Premium'].map(cat => (
                     <TabsTrigger key={cat} value={cat}
                       style={activeCategory === cat ? {
                         background: 'linear-gradient(135deg, #D4722A 0%, #C5972E 50%, #D4722A 100%)',
@@ -1261,6 +1290,11 @@ export default function Home() {
                   <p className="text-xs text-temple-saffron/70 flex items-center gap-1">
                     <FlameKindling className="w-3 h-3" /> {quickViewProduct.fragrance}
                   </p>
+                  {quickViewProduct.description && (
+                    <p className="text-xs text-temple-deep/70 leading-relaxed">
+                      {quickViewProduct.description}
+                    </p>
+                  )}
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-temple-deep">₹{quickViewProduct.price}</span>
                     <span className="text-sm text-temple-gold/40 line-through">₹{quickViewProduct.originalPrice}</span>
