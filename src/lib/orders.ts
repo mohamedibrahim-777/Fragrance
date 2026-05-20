@@ -5,12 +5,29 @@ import type { CartLine } from './cart'
 
 export const ORDERS_KEY = 'shri:orders'
 
+export interface CustomerDetails {
+  name: string
+  email: string
+  phone: string
+}
+
+export interface ShipmentDetails {
+  address: string
+  city: string
+  state: string
+  pincode: string
+  notes?: string
+  method?: string // 'standard' | 'express'
+}
+
 export interface StoredOrder {
   id: string
   date: string
   items: CartLine[]
   total: number
   status: string
+  customer?: CustomerDetails
+  shipment?: ShipmentDetails
 }
 
 export function loadOrders(): StoredOrder[] {
@@ -32,7 +49,11 @@ export function saveOrders(orders: StoredOrder[]): void {
   }
 }
 
-export function addOrder(items: CartLine[], total: number): StoredOrder {
+export function addOrder(
+  items: CartLine[],
+  total: number,
+  details?: { customer?: CustomerDetails; shipment?: ShipmentDetails },
+): StoredOrder {
   const order: StoredOrder = {
     id: 'ORD-' + Date.now().toString(36).toUpperCase(),
     date: new Date().toLocaleDateString('en-US', {
@@ -43,6 +64,8 @@ export function addOrder(items: CartLine[], total: number): StoredOrder {
     items,
     total,
     status: 'Processing',
+    customer: details?.customer,
+    shipment: details?.shipment,
   }
   saveOrders([order, ...loadOrders()])
   return order

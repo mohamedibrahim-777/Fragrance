@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from "@/lib/auth";
+import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session, type StoredUser, USERS_KEY } from "@/lib/auth";
+import { loadOrders, saveOrders, type StoredOrder } from "@/lib/orders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -381,6 +382,162 @@ export default function AdminDashboard() {
     toast({ title: "Password updated", description: "Your password has been changed." });
   }, [pwd, toast]);
 
+  // ── PRODUCTS / ORDERS / CUSTOMERS STATE ─────────────
+  type AdminProduct = typeof productsList[number] & { image?: string };
+  const [products, setProducts] = useState<AdminProduct[]>(productsList);
+  const [productSearch, setProductSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
+  const [productDraft, setProductDraft] = useState({ name: "", category: "", price: "", stock: "", image: "" });
+  const [adminOrders, setAdminOrders] = useState<StoredOrder[]>([]);
+  const [signedUpCustomers, setSignedUpCustomers] = useState<StoredUser[]>([]);
+  const [orderDetail, setOrderDetail] = useState<StoredOrder | null>(null);
+
+  const refreshOrders = useCallback(() => {
+    setAdminOrders(loadOrders());
+  }, []);
+
+  const refreshCustomers = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(USERS_KEY);
+      if (!raw) { setSignedUpCustomers([]); return; }
+      const parsed = JSON.parse(raw) as StoredUser[];
+      setSignedUpCustomers(Array.isArray(parsed) ? parsed.filter(u => u.role === 'customer') : []);
+    } catch { setSignedUpCustomers([]); }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem("shri:admin:products");
+      if (p) setProducts(JSON.parse(p));
+    } catch {}
+    refreshOrders();
+    refreshCustomers();
+    const onStorage = () => { refreshOrders(); refreshCustomers(); };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [refreshOrders, refreshCustomers]);
+
+  const persistProducts = useCallback((list: AdminProduct[]) => {
+    setProducts(list);
+    try { localStorage.setItem("shri:admin:products", JSON.stringify(list)); } catch {}
+  }, []);
+
+  const handleDeleteProduct = useCallback((id: number) => {
+    persistProducts(products.filter(p => p.id !== id));
+    toast({ title: "Product deleted" });
+  }, [products, persistProducts, toast]);
+
+  const openAddProduct = useCallback(() => {
+    setEditingProduct(null);
+    setProductDraft({ name: "", category: "", price: "", stock: "", image: "" });
+    setProductDialogOpen(true);
+  }, []);
+
+  const openEditProduct = useCallback((p: AdminProduct) => {
+    setEditingProduct(p);
+    setProductDraft({ name: p.name, category: p.category, price: String(p.price), stock: String(p.stock), image: p.image || "" });
+    setProductDialogOpen(true);
+  }, []);
+
+  const handleImageFile = useCallback((file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast({ title: "Invalid file", description: "Please choose an image file." }); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const max = 400;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, w, h);
+        setProductDraft(d => ({ ...d, image: canvas.toDataURL("image/jpeg", 0.8) }));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }, [toast]);
+
+  const handleSaveProduct = useCallback(() => {
+    const name = productDraft.name.trim();
+    if (!name) { toast({ title: "Name required" }); return; }
+    const stock = parseInt(productDraft.stock, 10) || 0;
+    const status = stock === 0 ? "Out of Stock" : stock < 20 ? "Low Stock" : "Active";
+    let next: AdminProduct[];
+    if (editingProduct) {
+      next = products.map(p => p.id === editingProduct.id
+        ? { ...p, name, category: productDraft.category || p.category, price: productDraft.price || p.price, stock, status, image: productDraft.image || p.image }
+        : p);
+    } else {
+      const id = products.reduce((m, p) => Math.max(m, p.id), 0) + 1;
+      next = [{ id, name, category: productDraft.category || "Others", price: productDraft.price || "₹0", stock, status, sales: 0, rating: 0, image: productDraft.image }, ...products];
+    }
+    persistProducts(next);
+    setProductDialogOpen(false);
+    toast({ title: editingProduct ? "Product updated" : "Product added", description: `${name} saved.` });
+  }, [productDraft, editingProduct, products, persistProducts, toast]);
+
+  const updateOrderStatus = useCallback((id: string, status: string) => {
+    const next = loadOrders().map(o => o.id === id ? { ...o, status } : o);
+    saveOrders(next);
+    setAdminOrders(next);
+    toast({ title: `Order ${id} → ${status}` });
+  }, [toast]);
+
+  const downloadCSV = useCallback((filename: string, rows: (string | number)[][]) => {
+    const csv = rows.map(r => r.map(v => {
+      const s = String(v ?? "").replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    }).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+  }, [products, productSearch]);
+
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return signedUpCustomers;
+    return signedUpCustomers.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+  }, [signedUpCustomers, customerSearch]);
+
+  // Compute per-customer order stats for display.
+  const customerStats = useMemo(() => {
+    const map = new Map<string, { orders: number; spent: number }>();
+    for (const o of adminOrders) {
+      const email = o.customer?.email?.toLowerCase();
+      if (!email) continue;
+      const prev = map.get(email) ?? { orders: 0, spent: 0 };
+      map.set(email, { orders: prev.orders + 1, spent: prev.spent + o.total });
+    }
+    return map;
+  }, [adminOrders]);
+
+  const dashboardStats = useMemo(() => {
+    const totalRevenue = adminOrders.reduce((s, o) => s + o.total, 0);
+    const processing = adminOrders.filter(o => o.status === 'Processing').length;
+    const shipped = adminOrders.filter(o => o.status === 'Shipped').length;
+    const delivered = adminOrders.filter(o => o.status === 'Delivered').length;
+    return {
+      totalRevenue, totalOrders: adminOrders.length,
+      totalCustomers: signedUpCustomers.length,
+      processing, shipped, delivered,
+    };
+  }, [adminOrders, signedUpCustomers]);
+
   // ── SECTION RENDERERS ──────────────────────────────
 
   const renderDashboard = () => (
@@ -399,7 +556,12 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsData.map((stat, i) => {
+        {[
+          { title: "Total Revenue", value: `₹${dashboardStats.totalRevenue.toLocaleString('en-IN')}`, icon: IndianRupee },
+          { title: "Orders", value: String(dashboardStats.totalOrders), icon: ShoppingCart },
+          { title: "Customers", value: String(dashboardStats.totalCustomers), icon: Users },
+          { title: "Active Products", value: String(products.filter(p => p.status === 'Active').length), icon: Package },
+        ].map((stat, i) => {
           const gradients = ["stat-gradient-revenue", "stat-gradient-orders", "stat-gradient-customers", "stat-gradient-conversion"];
           const iconBgs = [colors.saffron, colors.maroon, colors.templeGold, colors.deep];
           const delayClass = `card-enter-${i + 1}`;
@@ -410,11 +572,6 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: iconBgs[i], color: colors.warmCream }}>
                     <stat.icon className="w-5 h-5" />
-                  </div>
-                  <div className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    stat.trend === "up" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
-                    {stat.trend === "up" ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                    {stat.change}
                   </div>
                 </div>
                 <p className="text-2xl font-bold" style={{ color: colors.deep }}>{stat.value}</p>
@@ -467,16 +624,19 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentOrders.slice(0, 5).map((order) => (
+                  {adminOrders.slice(0, 5).map((order) => (
                     <tr key={order.id} className="border-b hover:bg-gray-50/60 transition-colors" style={{ borderColor: `${colors.templeGold}10` }}>
                       <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{order.id}</td>
-                      <td className="px-6 py-3 text-gray-700">{order.customer}</td>
-                      <td className="px-6 py-3 text-gray-500 hidden md:table-cell">{order.product}</td>
-                      <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{order.amount}</td>
+                      <td className="px-6 py-3 text-gray-700">{order.customer?.name ?? '—'}</td>
+                      <td className="px-6 py-3 text-gray-500 hidden md:table-cell max-w-[180px] truncate">{order.items.map(i => i.name).join(', ')}</td>
+                      <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>₹{order.total}</td>
                       <td className="px-6 py-3"><StatusBadge status={order.status} /></td>
                       <td className="px-6 py-3 text-gray-400 hidden sm:table-cell">{order.date}</td>
                     </tr>
                   ))}
+                  {adminOrders.length === 0 && (
+                    <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-400 text-xs">No orders yet</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -490,21 +650,25 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {topProducts.map((product, i) => (
-              <div key={i} className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700 truncate pr-2">{product.name}</span>
-                  <span className="text-xs font-semibold shrink-0" style={{ color: colors.saffron }}>₹{(product.revenue / 1000).toFixed(1)}k</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${(product.revenue / product.maxRevenue) * 100}%`, background: `linear-gradient(90deg, ${colors.saffron}, ${colors.templeGold})` }} />
+            {(() => {
+              const top = [...products].sort((a, b) => b.sales - a.sales).slice(0, 5);
+              const maxSales = Math.max(1, ...top.map(p => p.sales));
+              return top.map((product, i) => (
+                <div key={product.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700 truncate pr-2">{product.name}</span>
+                    <span className="text-xs font-semibold shrink-0" style={{ color: colors.saffron }}>{product.price}</span>
                   </div>
-                  <span className="text-xs text-gray-400 shrink-0 w-12 text-right">{product.sales} sold</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${(product.sales / maxSales) * 100}%`, background: `linear-gradient(90deg, ${colors.saffron}, ${colors.templeGold})` }} />
+                    </div>
+                    <span className="text-xs text-gray-400 shrink-0 w-14 text-right">{product.sales} sold</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </CardContent>
         </Card>
       </div>
@@ -533,10 +697,14 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500 mt-0.5">Manage your product inventory and catalog</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30` }}>
+          <Button variant="outline" size="sm" onClick={() => downloadCSV(
+            'products.csv',
+            [['ID','Name','Category','Price','Stock','Status','Sales','Rating'],
+            ...products.map(p => [p.id, p.name, p.category, p.price, p.stock, p.status, p.sales, p.rating])]
+          )} className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30` }}>
             <Download className="w-3.5 h-3.5" /> Export
           </Button>
-          <Button size="sm" className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
+          <Button size="sm" onClick={openAddProduct} className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
             <Plus className="w-3.5 h-3.5" /> Add Product
           </Button>
         </div>
@@ -545,10 +713,10 @@ export default function AdminDashboard() {
       {/* Product Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Total Products", value: "48", icon: Package, color: colors.saffron },
-          { label: "Active", value: "35", icon: CheckCircle2, color: "#16a34a" },
-          { label: "Low Stock", value: "8", icon: AlertCircle, color: colors.saffron },
-          { label: "Out of Stock", value: "5", icon: XCircle, color: colors.maroon },
+          { label: "Total Products", value: String(products.length), icon: Package, color: colors.saffron },
+          { label: "Active", value: String(products.filter(p => p.status === 'Active').length), icon: CheckCircle2, color: "#16a34a" },
+          { label: "Low Stock", value: String(products.filter(p => p.status === 'Low Stock').length), icon: AlertCircle, color: colors.saffron },
+          { label: "Out of Stock", value: String(products.filter(p => p.status === 'Out of Stock').length), icon: XCircle, color: colors.maroon },
         ].map((s, i) => (
           <Card key={i} className="border shadow-sm card-enter" style={{ borderColor: `${colors.templeGold}20` }}>
             <CardContent className="p-4 flex items-center gap-3">
@@ -570,10 +738,8 @@ export default function AdminDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <CardTitle className="text-base" style={{ color: colors.deep }}>Product Catalog</CardTitle>
             <div className="flex items-center gap-2">
-              <Input placeholder="Search products..." className="h-8 text-xs w-48" style={{ borderColor: `${colors.templeGold}30` }} />
-              <Button variant="outline" size="sm" className="text-xs gap-1 h-8" style={{ borderColor: `${colors.templeGold}30` }}>
-                <Filter className="w-3 h-3" /> Filter
-              </Button>
+              <Input placeholder="Search products..." value={productSearch} onChange={(e) => setProductSearch(e.target.value)}
+                className="h-8 text-xs w-48" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
           </div>
         </CardHeader>
@@ -593,9 +759,20 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {productsList.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50/60 transition-colors" style={{ borderColor: `${colors.templeGold}10` }}>
-                    <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{product.name}</td>
+                    <td className="px-6 py-3">
+                      <div className="flex items-center gap-2">
+                        {product.image ? (
+                          <img src={product.image} alt={product.name} className="w-8 h-8 rounded-md object-cover border" style={{ borderColor: `${colors.templeGold}25` }} />
+                        ) : (
+                          <span className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: `${colors.templeGold}15` }}>
+                            <Package className="w-3.5 h-3.5" style={{ color: colors.saffron }} />
+                          </span>
+                        )}
+                        <span className="font-medium" style={{ color: colors.deep }}>{product.name}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-3 text-gray-500">{product.category}</td>
                     <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{product.price}</td>
                     <td className="px-6 py-3">
@@ -612,12 +789,15 @@ export default function AdminDashboard() {
                     <td className="px-6 py-3"><ProductStatusBadge status={product.status} /></td>
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-amber-50"><Edit3 className="w-3.5 h-3.5" style={{ color: colors.saffron }} /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-400" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEditProduct(product)} className="h-7 w-7 hover:bg-amber-50"><Edit3 className="w-3.5 h-3.5" style={{ color: colors.saffron }} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteProduct(product.id)} className="h-7 w-7 hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-400" /></Button>
                       </div>
                     </td>
                   </tr>
                 ))}
+                {filteredProducts.length === 0 && (
+                  <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400 text-xs">No products match your search.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -627,19 +807,33 @@ export default function AdminDashboard() {
   );
 
   const renderOrders = () => {
-    const filtered = orderFilter === "All" ? recentOrders : recentOrders.filter(o => o.status === orderFilter);
+    const filtered = orderFilter === "All" ? adminOrders : adminOrders.filter(o => o.status === orderFilter);
     return (
       <>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold" style={{ color: colors.deep }}>Orders</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Track and manage customer orders</p>
+            <p className="text-sm text-gray-500 mt-0.5">Track and manage customer orders ({adminOrders.length} total)</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30` }}>
+            <Button variant="outline" size="sm" onClick={() => downloadCSV(
+              'orders.csv',
+              [['Order ID','Customer','Email','Phone','Items','Total','Status','Date','Address'],
+              ...adminOrders.map(o => [
+                o.id,
+                o.customer?.name ?? '',
+                o.customer?.email ?? '',
+                o.customer?.phone ?? '',
+                o.items.map(i => `${i.name} x${i.quantity}`).join('; '),
+                o.total,
+                o.status,
+                o.date,
+                o.shipment ? `${o.shipment.address}, ${o.shipment.city}, ${o.shipment.state} - ${o.shipment.pincode}` : '',
+              ])]
+            )} className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30` }}>
               <Download className="w-3.5 h-3.5" /> Export
             </Button>
-            <Button size="sm" className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
+            <Button size="sm" onClick={refreshOrders} className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
               <RefreshCw className="w-3.5 h-3.5" /> Refresh
             </Button>
           </div>
@@ -648,10 +842,10 @@ export default function AdminDashboard() {
         {/* Order Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: "Total Orders", value: "1,234", icon: ShoppingCart, color: colors.saffron },
-            { label: "Processing", value: "45", icon: Clock, color: colors.saffron },
-            { label: "Shipped", value: "28", icon: Truck, color: "#0284c7" },
-            { label: "Delivered", value: "1,148", icon: CheckCircle2, color: "#16a34a" },
+            { label: "Total Orders", value: String(dashboardStats.totalOrders), icon: ShoppingCart, color: colors.saffron },
+            { label: "Processing", value: String(dashboardStats.processing), icon: Clock, color: colors.saffron },
+            { label: "Shipped", value: String(dashboardStats.shipped), icon: Truck, color: "#0284c7" },
+            { label: "Delivered", value: String(dashboardStats.delivered), icon: CheckCircle2, color: "#16a34a" },
           ].map((s, i) => (
             <Card key={i} className="border shadow-sm card-enter" style={{ borderColor: `${colors.templeGold}20` }}>
               <CardContent className="p-4 flex items-center gap-3">
@@ -695,18 +889,30 @@ export default function AdminDashboard() {
                   {filtered.map((order) => (
                     <tr key={order.id} className="border-b hover:bg-gray-50/60 transition-colors" style={{ borderColor: `${colors.templeGold}10` }}>
                       <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{order.id}</td>
-                      <td className="px-6 py-3 text-gray-700">{order.customer}</td>
-                      <td className="px-6 py-3 text-gray-500">{order.product}</td>
-                      <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{order.amount}</td>
-                      <td className="px-6 py-3"><StatusBadge status={order.status} /></td>
+                      <td className="px-6 py-3 text-gray-700">{order.customer?.name ?? '—'}</td>
+                      <td className="px-6 py-3 text-gray-500 max-w-[220px] truncate">
+                        {order.items.map(i => `${i.name} ×${i.quantity}`).join(', ')}
+                      </td>
+                      <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>₹{order.total}</td>
+                      <td className="px-6 py-3">
+                        <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                          className="text-xs px-2 py-1 rounded-md border bg-white cursor-pointer"
+                          style={{ borderColor: `${colors.templeGold}40`, color: colors.deep }}>
+                          {["Processing","Shipped","Delivered","Cancelled"].map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </td>
                       <td className="px-6 py-3 text-gray-400">{order.date}</td>
                       <td className="px-6 py-3">
-                        <Button variant="ghost" size="sm" className="text-xs gap-1 h-7" style={{ color: colors.saffron }}>
+                        <Button variant="ghost" size="sm" onClick={() => setOrderDetail(order)}
+                          className="text-xs gap-1 h-7" style={{ color: colors.saffron }}>
                           <Eye className="w-3 h-3" /> View
                         </Button>
                       </td>
                     </tr>
                   ))}
+                  {filtered.length === 0 && (
+                    <tr><td colSpan={7} className="px-6 py-10 text-center text-gray-400 text-xs">No orders yet — place an order from the storefront and refresh.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -724,23 +930,37 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500 mt-0.5">Manage your customer base and relationships</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30` }}>
+          <Button variant="outline" size="sm" onClick={() => downloadCSV(
+            'customers.csv',
+            [['Name','Email','Phone','Orders','Spent','Joined','Role'],
+            ...signedUpCustomers.map(c => {
+              const stats = customerStats.get(c.email.toLowerCase()) ?? { orders: 0, spent: 0 };
+              return [c.name, c.email, c.phone ?? '', stats.orders, stats.spent, new Date(c.createdAt).toLocaleDateString(), c.role];
+            })]
+          )} className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30` }}>
             <Download className="w-3.5 h-3.5" /> Export
           </Button>
-          <Button size="sm" className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
-            <UserPlus className="w-3.5 h-3.5" /> Add Customer
+          <Button size="sm" onClick={refreshCustomers} className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </Button>
         </div>
       </div>
 
       {/* Customer Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: "Total Customers", value: "5,678", icon: Users, color: colors.templeGold },
-          { label: "VIP Members", value: "342", icon: Star, color: colors.saffron },
-          { label: "New This Month", value: "120", icon: UserPlus, color: "#16a34a" },
-          { label: "Avg. Order Value", value: "₹1,245", icon: IndianRupee, color: colors.deep },
-        ].map((s, i) => (
+        {(() => {
+          const totalSpent = Array.from(customerStats.values()).reduce((s, v) => s + v.spent, 0);
+          const buyers = Array.from(customerStats.values()).filter(v => v.orders > 0).length;
+          const aov = adminOrders.length > 0 ? Math.round(totalSpent / adminOrders.length) : 0;
+          const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+          const newThisMonth = signedUpCustomers.filter(c => new Date(c.createdAt).getTime() >= monthAgo).length;
+          return [
+            { label: "Total Customers", value: String(signedUpCustomers.length), icon: Users, color: colors.templeGold },
+            { label: "Active Buyers", value: String(buyers), icon: Star, color: colors.saffron },
+            { label: "New This Month", value: String(newThisMonth), icon: UserPlus, color: "#16a34a" },
+            { label: "Avg. Order Value", value: `₹${aov.toLocaleString('en-IN')}`, icon: IndianRupee, color: colors.deep },
+          ];
+        })().map((s, i) => (
           <Card key={i} className="border shadow-sm card-enter" style={{ borderColor: `${colors.templeGold}20` }}>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
@@ -760,7 +980,8 @@ export default function AdminDashboard() {
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <CardTitle className="text-base" style={{ color: colors.deep }}>Customer Directory</CardTitle>
-            <Input placeholder="Search customers..." className="h-8 text-xs w-48" style={{ borderColor: `${colors.templeGold}30` }} />
+            <Input placeholder="Search customers..." value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)}
+              className="h-8 text-xs w-48" style={{ borderColor: `${colors.templeGold}30` }} />
           </div>
         </CardHeader>
         <CardContent className="px-0">
@@ -772,37 +993,45 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3">Email</th>
                   <th className="px-6 py-3">Orders</th>
                   <th className="px-6 py-3">Total Spent</th>
-                  <th className="px-6 py-3">Location</th>
+                  <th className="px-6 py-3">Phone</th>
                   <th className="px-6 py-3">Joined</th>
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {customersList.map((customer) => (
-                  <tr key={customer.id} className="border-b hover:bg-gray-50/60 transition-colors" style={{ borderColor: `${colors.templeGold}10` }}>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: colors.maroon }}>
-                          {customer.name.split(" ").map(n => n[0]).join("")}
+                {filteredCustomers.map((customer) => {
+                  const stats = customerStats.get(customer.email.toLowerCase()) ?? { orders: 0, spent: 0 };
+                  const status = stats.spent > 5000 ? 'VIP' : stats.orders > 0 ? 'Active' : 'New';
+                  return (
+                    <tr key={customer.email} className="border-b hover:bg-gray-50/60 transition-colors" style={{ borderColor: `${colors.templeGold}10` }}>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: colors.maroon }}>
+                            {customer.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="font-medium" style={{ color: colors.deep }}>{customer.name}</span>
                         </div>
-                        <span className="font-medium" style={{ color: colors.deep }}>{customer.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-gray-500">{customer.email}</td>
-                    <td className="px-6 py-3 text-gray-700">{customer.orders}</td>
-                    <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>{customer.spent}</td>
-                    <td className="px-6 py-3 text-gray-500">{customer.location}</td>
-                    <td className="px-6 py-3 text-gray-400">{customer.joined}</td>
-                    <td className="px-6 py-3"><CustomerStatusBadge status={customer.status} /></td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-amber-50"><Eye className="w-3.5 h-3.5" style={{ color: colors.saffron }} /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-amber-50"><Mail className="w-3.5 h-3.5" style={{ color: colors.saffron }} /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-3 text-gray-500">{customer.email}</td>
+                      <td className="px-6 py-3 text-gray-700">{stats.orders}</td>
+                      <td className="px-6 py-3 font-medium" style={{ color: colors.deep }}>₹{stats.spent.toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-3 text-gray-500">{customer.phone || '—'}</td>
+                      <td className="px-6 py-3 text-gray-400">{new Date(customer.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-3"><CustomerStatusBadge status={status} /></td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => window.location.href = `mailto:${customer.email}`} className="h-7 w-7 hover:bg-amber-50">
+                            <Mail className="w-3.5 h-3.5" style={{ color: colors.saffron }} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredCustomers.length === 0 && (
+                  <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400 text-xs">No customers yet — invite signups via the storefront.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -1284,6 +1513,150 @@ export default function AdminDashboard() {
 
       {/* ── Mobile sidebar overlay ──────────────────── */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+
+      {/* ── Product Add/Edit Dialog ─────────────────── */}
+      <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogTitle className="text-base font-bold" style={{ color: colors.deep }}>
+            {editingProduct ? 'Edit Product' : 'Add Product'}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-gray-500">
+            {editingProduct ? 'Update product details and save.' : 'Add a new product to your catalog.'}
+          </DialogDescription>
+
+          <div className="space-y-3 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Name *</label>
+                <Input value={productDraft.name} onChange={(e) => setProductDraft(d => ({ ...d, name: e.target.value }))}
+                  className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Category</label>
+                <Input value={productDraft.category} onChange={(e) => setProductDraft(d => ({ ...d, category: e.target.value }))}
+                  placeholder="Floral, Herbal, Premium..." className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Price</label>
+                <Input value={productDraft.price} onChange={(e) => setProductDraft(d => ({ ...d, price: e.target.value }))}
+                  placeholder="₹299" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Stock</label>
+                <Input type="number" value={productDraft.stock} onChange={(e) => setProductDraft(d => ({ ...d, stock: e.target.value }))}
+                  placeholder="0" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Product Image</label>
+              <div className="flex items-center gap-3">
+                {productDraft.image ? (
+                  <img src={productDraft.image} alt="" className="w-16 h-16 rounded-lg object-cover border" style={{ borderColor: `${colors.templeGold}30` }} />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center border" style={{ borderColor: `${colors.templeGold}30`, backgroundColor: `${colors.templeGold}10` }}>
+                    <Package className="w-6 h-6" style={{ color: colors.saffron }} />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <input id="admin-product-image" type="file" accept="image/*" className="hidden"
+                    onChange={(e) => handleImageFile(e.target.files?.[0])} />
+                  <Button variant="outline" size="sm" type="button"
+                    onClick={() => document.getElementById('admin-product-image')?.click()}
+                    className="text-xs gap-1 h-8" style={{ borderColor: `${colors.templeGold}30` }}>
+                    <Upload className="w-3 h-3" /> {productDraft.image ? 'Change' : 'Upload'}
+                  </Button>
+                  {productDraft.image && (
+                    <Button variant="ghost" size="sm" type="button"
+                      onClick={() => setProductDraft(d => ({ ...d, image: '' }))}
+                      className="text-xs gap-1 h-7 text-red-500 hover:bg-red-50">
+                      <Trash2 className="w-3 h-3" /> Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">Auto-resized to 400px JPEG, saved to your browser.</p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-5">
+            <Button variant="outline" onClick={() => setProductDialogOpen(false)} className="text-xs h-9" style={{ borderColor: `${colors.templeGold}30` }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProduct} className="text-xs h-9 text-white gap-1" style={{ backgroundColor: colors.maroon }}>
+              <Save className="w-3.5 h-3.5" /> {editingProduct ? 'Save Changes' : 'Add Product'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Order Detail Dialog ─────────────────── */}
+      <Dialog open={!!orderDetail} onOpenChange={(open) => !open && setOrderDetail(null)}>
+        <DialogContent className="max-w-2xl">
+          {orderDetail && (
+            <>
+              <DialogTitle className="text-base font-bold" style={{ color: colors.deep }}>
+                Order {orderDetail.id}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-gray-500">
+                Placed on {orderDetail.date} · Status: {orderDetail.status}
+              </DialogDescription>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <div className="p-3 rounded-lg border" style={{ borderColor: `${colors.templeGold}25` }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.saffron }}>Customer</p>
+                  <p className="text-sm font-semibold" style={{ color: colors.deep }}>{orderDetail.customer?.name ?? '—'}</p>
+                  <p className="text-xs text-gray-500">{orderDetail.customer?.email}</p>
+                  <p className="text-xs text-gray-500">{orderDetail.customer?.phone}</p>
+                </div>
+                <div className="p-3 rounded-lg border" style={{ borderColor: `${colors.templeGold}25` }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.saffron }}>Shipping</p>
+                  {orderDetail.shipment ? (
+                    <>
+                      <p className="text-sm" style={{ color: colors.deep }}>{orderDetail.shipment.address}</p>
+                      <p className="text-xs text-gray-500">{orderDetail.shipment.city}, {orderDetail.shipment.state} — {orderDetail.shipment.pincode}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mt-1" style={{ color: colors.saffron }}>
+                        {orderDetail.shipment.method === 'express' ? 'Express • 1–2 days' : 'Standard • 3–5 days'}
+                      </p>
+                    </>
+                  ) : <p className="text-xs text-gray-400">No shipping info</p>}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-lg border" style={{ borderColor: `${colors.templeGold}25` }}>
+                <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider border-b" style={{ color: colors.saffron, borderColor: `${colors.templeGold}25` }}>Items</p>
+                <ul className="divide-y" style={{ borderColor: `${colors.templeGold}15` }}>
+                  {orderDetail.items.map((it, i) => (
+                    <li key={i} className="flex justify-between items-center px-3 py-2 text-sm">
+                      <span style={{ color: colors.deep }}>{it.name} × {it.quantity}</span>
+                      <span className="font-semibold" style={{ color: colors.deep }}>₹{it.price * it.quantity}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="px-3 py-2 flex justify-between text-sm font-bold border-t" style={{ color: colors.deep, borderColor: `${colors.templeGold}25` }}>
+                  <span>Total</span><span>₹{orderDetail.total}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-between items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Status:</span>
+                  <select value={orderDetail.status} onChange={(e) => {
+                    updateOrderStatus(orderDetail.id, e.target.value);
+                    setOrderDetail({ ...orderDetail, status: e.target.value });
+                  }} className="text-xs px-2 py-1 rounded-md border bg-white cursor-pointer"
+                    style={{ borderColor: `${colors.templeGold}40`, color: colors.deep }}>
+                    {["Processing","Shipped","Delivered","Cancelled"].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <Button onClick={() => setOrderDetail(null)} variant="outline" className="text-xs h-8" style={{ borderColor: `${colors.templeGold}30` }}>
+                  Close
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

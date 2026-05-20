@@ -34,12 +34,17 @@ interface OrderItem {
   image: string
 }
 
+interface OrderCustomer { name: string; email: string; phone: string }
+interface OrderShipment { address: string; city: string; state: string; pincode: string; notes?: string; method?: string }
+
 interface Order {
   id: string
   date: string
   status: 'Delivered' | 'Processing' | 'Shipped'
   items: OrderItem[]
   total: number
+  customer?: OrderCustomer
+  shipment?: OrderShipment
 }
 
 interface WishlistItem {
@@ -301,6 +306,8 @@ export default function UserDashboard() {
           price: i.price,
           image: i.image,
         })),
+        customer: o.customer,
+        shipment: o.shipment,
       })),
     )
   }, [])
@@ -481,10 +488,43 @@ export default function UserDashboard() {
               {/* Expandable Details */}
               <div
                 className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                  expandedOrder === order.id ? 'max-h-[600px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+                  expandedOrder === order.id ? 'max-h-[900px] opacity-100 mt-4' : 'max-h-0 opacity-0'
                 }`}
               >
                 <Separator className="mb-4 bg-temple-gold/15" />
+
+                {(order.customer || order.shipment) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    {order.customer && (
+                      <div className="p-3 rounded-lg bg-temple-cream/60 border border-temple-gold/15">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-temple-saffron mb-1.5 flex items-center gap-1">
+                          <User className="w-3 h-3" /> Customer Details
+                        </p>
+                        <p className="text-sm font-semibold text-temple-deep">{order.customer.name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Mail className="w-3 h-3" /> {order.customer.email}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="w-3 h-3" /> {order.customer.phone}</p>
+                      </div>
+                    )}
+                    {order.shipment && (
+                      <div className="p-3 rounded-lg bg-temple-cream/60 border border-temple-gold/15">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-temple-saffron mb-1.5 flex items-center gap-1">
+                          <Truck className="w-3 h-3" /> Shipment Details
+                        </p>
+                        <p className="text-sm text-temple-deep">{order.shipment.address}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{order.shipment.city}, {order.shipment.state} \u2014 {order.shipment.pincode}</p>
+                        {order.shipment.method && (
+                          <p className="text-[10px] text-temple-saffron font-semibold uppercase tracking-wider mt-1">
+                            {order.shipment.method === 'express' ? 'Express \u2022 1\u20132 days' : 'Standard \u2022 3\u20135 days'}
+                          </p>
+                        )}
+                        {order.shipment.notes && (
+                          <p className="text-[11px] text-temple-deep/55 mt-1 italic">Note: {order.shipment.notes}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {order.items.map((item, i) => (
                     <div key={i} className="flex items-center gap-3 bg-temple-cream/50 rounded-lg p-3">

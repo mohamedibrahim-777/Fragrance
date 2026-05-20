@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Flame, ShoppingCart, Heart, Star, Search, Menu, X, Minus, Plus,
   MapPin, Phone, Mail, ChevronRight, Truck, Shield, Award,
@@ -320,6 +321,7 @@ function OrnamentalDivider({ className = '' }: { className?: string }) {
 // ====== MAIN COMPONENT ======
 export default function Home() {
   const { toast } = useToast()
+  const router = useRouter()
 
   const [session, setSession] = useState<Session | null>(null)
   useEffect(() => {
@@ -351,9 +353,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [cartOpen, setCartOpen] = useState(false)
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [lastOrderId, setLastOrderId] = useState<string | null>(null)
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [email, setEmail] = useState('')
@@ -410,7 +409,10 @@ export default function Home() {
       }
       return [...prev, { ...product, quantity: 1 }]
     })
-    toast({ title: 'Added to Cart!', description: `${product.name} has been added to your cart.` })
+    toast({
+      title: 'Added to Cart',
+      description: `${product.name} — view your cart to checkout`,
+    })
   }, [toast])
 
   const addPoojaSet = useCallback(() => {
@@ -430,8 +432,8 @@ export default function Home() {
       reviews: 412,
     }
     addToCart(bundle)
-    setCartOpen(true)
-  }, [addToCart])
+    router.push('/cart')
+  }, [addToCart, router])
 
   const updateQuantity = useCallback((id: number, delta: number) => {
     setCart(prev => prev.map(item => {
@@ -453,15 +455,6 @@ export default function Home() {
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
-  const handlePlaceOrder = useCallback(() => {
-    if (cart.length === 0) return
-    const order = addOrder(cart as CartLine[], cartTotal)
-    setLastOrderId(order.id)
-    setCart([])
-    setCartOpen(false)
-    toast({ title: 'Order Placed!', description: `Order ${order.id} confirmed. Thank you!` })
-  }, [cart, cartTotal, toast])
 
   const filteredProducts = products.filter(p => {
     const matchCategory = activeCategory === 'All' || p.category === activeCategory
@@ -545,15 +538,17 @@ export default function Home() {
                 className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
                 <Search className="w-[18px] h-[18px]" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)}
-                className="relative text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
-                <ShoppingCart className="w-[18px] h-[18px]" />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center p-0 bg-temple-saffron text-white text-[9px] animate-diya">
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
+              <Link href="/cart">
+                <Button variant="ghost" size="icon"
+                  className="relative text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
+                  <ShoppingCart className="w-[18px] h-[18px]" />
+                  {cartCount > 0 && (
+                    <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center p-0 bg-temple-saffron text-white text-[9px] animate-diya">
+                      {cartCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
               {session ? (
                 <>
                   <Link href={session.role === 'admin' ? '/admin' : '/dashboard'} className="hidden sm:block">
@@ -870,11 +865,16 @@ export default function Home() {
                           <span className="text-xs text-temple-gold/40 line-through">₹{product.originalPrice}</span>
                         </div>
                       </CardContent>
-                      <CardFooter className="p-5 pt-0">
+                      <CardFooter className="p-5 pt-0 flex gap-2">
                         <Button onClick={(e) => { e.stopPropagation(); addToCart(product) }}
-                          className="w-full bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold text-sm h-10 transition-all shadow-md shadow-temple-deep/25"
+                          className="flex-1 bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold text-xs h-10 transition-all shadow-md shadow-temple-deep/25"
                           size="sm">
                           <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Add to Cart
+                        </Button>
+                        <Button onClick={(e) => { e.stopPropagation(); addToCart(product); router.push('/checkout') }}
+                          className="flex-1 saffron-gradient text-white hover:brightness-110 font-semibold text-xs h-10 transition-all shadow-md shadow-temple-saffron/25"
+                          size="sm">
+                          <Flame className="w-3.5 h-3.5 mr-1.5" /> Buy Now
                         </Button>
                       </CardFooter>
                     </div>
@@ -1234,106 +1234,6 @@ export default function Home() {
         </footer>
       </main>
 
-      {/* ====== CART SHEET ====== */}
-      <Sheet open={cartOpen} onOpenChange={setCartOpen}>
-        <SheetContent className="w-full sm:max-w-md bg-temple-cream">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2 text-temple-deep">
-              <ShoppingCart className="w-5 h-5 text-temple-gold" />
-              Your Cart ({cartCount})
-            </SheetTitle>
-          </SheetHeader>
-          {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-temple-gold/50">
-              <ShoppingCart className="w-12 h-12 mb-4" />
-              <p className="font-medium">Your cart is empty</p>
-              <p className="text-xs mt-1">Add sacred fragrances to begin</p>
-            </div>
-          ) : (
-            <div className="flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto py-4 space-y-3">
-                {cart.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-temple-gold/10">
-                    <img src={item.image} alt={item.name} className="w-14 h-14 object-contain rounded-md" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-temple-deep truncate">{item.name}</p>
-                      <p className="text-xs text-temple-gold/60">₹{item.price} each</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Button variant="outline" size="icon" className="h-6 w-6 text-xs" onClick={() => updateQuantity(item.id, -1)}>
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-                        <Button variant="outline" size="icon" className="h-6 w-6 text-xs" onClick={() => updateQuantity(item.id, 1)}>
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-temple-deep">₹{item.price * item.quantity}</p>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 mt-1 text-red-400 hover:text-red-600" onClick={() => removeFromCart(item.id)}>
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-temple-gold/15 pt-4 space-y-3">
-                <div className="flex items-center justify-between font-bold text-temple-deep">
-                  <span>Total</span>
-                  <span className="text-lg">₹{cartTotal}</span>
-                </div>
-                <Button onClick={() => { setLastOrderId(null); setCheckoutOpen(true) }}
-                  className="w-full saffron-gradient text-white hover:brightness-110 py-5 font-semibold shadow-lg shadow-temple-saffron/20">
-                  Proceed to Checkout
-                </Button>
-              </div>
-            </div>
-          )}
-          <SheetFooter />
-        </SheetContent>
-      </Sheet>
-
-      {/* ====== CHECKOUT DIALOG ====== */}
-      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="max-w-md bg-temple-cream">
-          {lastOrderId ? (
-            <div className="text-center py-6">
-              <DialogTitle className="text-xl font-bold text-temple-deep mb-2">Order Confirmed</DialogTitle>
-              <DialogDescription className="sr-only">Your order has been confirmed successfully.</DialogDescription>
-              <div className="w-14 h-14 rounded-full saffron-gradient flex items-center justify-center mx-auto mb-4">
-                <ShoppingCart className="w-7 h-7 text-white" />
-              </div>
-              <p className="text-sm text-temple-gold/80">Your order <span className="font-semibold text-temple-deep">{lastOrderId}</span> has been placed.</p>
-              <p className="text-xs text-temple-gold/60 mt-1">You can track it in your dashboard.</p>
-              <Button onClick={() => setCheckoutOpen(false)}
-                className="mt-6 w-full saffron-gradient text-white hover:brightness-110 font-semibold">
-                Continue Shopping
-              </Button>
-            </div>
-          ) : (
-            <>
-              <DialogTitle className="text-lg font-bold text-temple-deep">Checkout</DialogTitle>
-              <DialogDescription className="sr-only">Review your cart and place your order.</DialogDescription>
-              <div className="max-h-64 overflow-y-auto space-y-2 py-2">
-                {cart.map(item => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-temple-deep truncate pr-2">{item.name} × {item.quantity}</span>
-                    <span className="font-medium text-temple-deep shrink-0">₹{item.price * item.quantity}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between font-bold text-temple-deep border-t border-temple-gold/15 pt-3">
-                <span>Total</span>
-                <span>₹{cartTotal}</span>
-              </div>
-              <Button onClick={handlePlaceOrder} disabled={cart.length === 0}
-                className="w-full saffron-gradient text-white hover:brightness-110 py-5 font-semibold">
-                Place Order
-              </Button>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* ====== QUICK VIEW DIALOG ====== */}
       <Dialog open={!!quickViewProduct} onOpenChange={() => setQuickViewProduct(null)}>
@@ -1370,10 +1270,16 @@ export default function Home() {
                     <span className="text-2xl font-bold text-temple-deep">₹{quickViewProduct.price}</span>
                     <span className="text-sm text-temple-gold/40 line-through">₹{quickViewProduct.originalPrice}</span>
                   </div>
-                  <Button onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null) }}
-                    className="w-full bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold shadow-md shadow-temple-deep/25">
-                    <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null) }}
+                      className="flex-1 bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold shadow-md shadow-temple-deep/25">
+                      <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+                    </Button>
+                    <Button onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null); router.push('/checkout') }}
+                      className="flex-1 saffron-gradient text-white hover:brightness-110 font-semibold shadow-md shadow-temple-saffron/25">
+                      <Flame className="w-4 h-4 mr-2" /> Buy Now
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>

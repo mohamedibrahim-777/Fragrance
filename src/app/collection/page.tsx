@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Search, Star, ShoppingCart, Eye, Heart, Sparkles,
-  FlameKindling, Filter, SlidersHorizontal, Package, X, Check
+  FlameKindling, Filter, SlidersHorizontal, Package, X, Check, Flame
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -159,6 +160,7 @@ function loadAdminProducts(): CollectionProduct[] {
 type SortKey = 'featured' | 'price-asc' | 'price-desc' | 'rating'
 
 export default function CollectionPage() {
+  const router = useRouter()
   const { toast } = useToast()
   const [adminProducts, setAdminProducts] = useState<CollectionProduct[]>([])
   const [hydrated, setHydrated] = useState(false)
@@ -235,8 +237,8 @@ export default function CollectionPage() {
           <h1 className="hidden sm:block text-lg font-bold text-temple-deep tracking-wide">
             Sacred Collection
           </h1>
-          <Link href="/dashboard" className="text-xs sm:text-sm font-medium text-temple-saffron hover:text-temple-deep transition-colors">
-            View Cart →
+          <Link href="/cart" className="text-xs sm:text-sm font-medium text-temple-saffron hover:text-temple-deep transition-colors flex items-center gap-1">
+            <ShoppingCart className="w-3.5 h-3.5" /> View Cart
           </Link>
         </div>
       </header>
@@ -449,10 +451,10 @@ export default function CollectionPage() {
                     </div>
                   </CardContent>
 
-                  <CardFooter className="p-4 pt-0">
+                  <CardFooter className="p-4 pt-0 flex gap-2">
                     <Button
                       onClick={(e) => { e.stopPropagation(); handleAddToCart(p) }}
-                      className="w-full bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold text-sm h-10 transition-all shadow-md shadow-temple-deep/20"
+                      className="flex-1 bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold text-xs h-10 transition-all shadow-md shadow-temple-deep/20"
                       size="sm"
                     >
                       {justAdded === p.id ? (
@@ -460,6 +462,13 @@ export default function CollectionPage() {
                       ) : (
                         <><ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Add to Cart</>
                       )}
+                    </Button>
+                    <Button
+                      onClick={(e) => { e.stopPropagation(); handleAddToCart(p); router.push('/checkout') }}
+                      className="flex-1 saffron-gradient text-white hover:brightness-110 font-semibold text-xs h-10 shadow-md shadow-temple-saffron/25"
+                      size="sm"
+                    >
+                      <Flame className="w-3.5 h-3.5 mr-1.5" /> Buy Now
                     </Button>
                   </CardFooter>
                 </Card>
