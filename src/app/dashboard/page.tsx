@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ShoppingBag, Heart, Award, MapPin, User, Settings,
@@ -20,6 +20,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import { addToStoredCart, CART_KEY, type CartLine } from '@/lib/cart'
+import { loadOrders, ORDERS_KEY } from '@/lib/orders'
 
 // ====== TYPES ======
 
@@ -75,6 +77,15 @@ const userData = {
   initials: 'PS',
   memberSince: 'January 2023',
   membership: 'Temple Gold Member',
+}
+
+const deriveInitials = (name: string) =>
+  name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || 'U'
+
+const PROFILE_KEY = 'shri:profile'
+
+const persistProfile = (p: { name: string; email: string; phone: string }) => {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)) } catch { /* storage unavailable */ }
 }
 
 const orders: Order[] = [
@@ -215,7 +226,23 @@ export default function UserDashboard() {
   const [addressDraft, setAddressDraft] = useState({ label: '', name: '', line1: '', line2: '', pincode: '', phone: '' })
 
   // Settings state
+  const [user, setUser] = useState(userData)
   const [profileForm, setProfileForm] = useState({ name: userData.name, email: userData.email, phone: userData.phone })
+
+  // Load any previously saved profile from localStorage (client-only, after mount
+  // to avoid hydration mismatch with the static-exported HTML).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PROFILE_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw) as { name?: string; email?: string; phone?: string }
+      const name = saved.name ?? userData.name
+      const email = saved.email ?? userData.email
+      const phone = saved.phone ?? userData.phone
+      setUser(prev => ({ ...prev, name, email, phone, initials: deriveInitials(name) }))
+      setProfileForm({ name, email, phone })
+    } catch { /* ignore corrupt/unavailable storage */ }
+  }, [])
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' })
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>({
@@ -231,6 +258,27 @@ export default function UserDashboard() {
   // Edit Profile Dialog
   const [editProfileOpen, setEditProfileOpen] = useState(false)
 
+  // Orders placed via checkout (localStorage), shown above the mock history.
+  const [storedOrders, setStoredOrders] = useState<Order[]>([])
+  useEffect(() => {
+    setStoredOrders(
+      loadOrders().map(o => ({
+        id: o.id,
+        date: o.date,
+        status: o.status as Order['status'],
+        total: o.total,
+        items: o.items.map(i => ({
+          name: i.name,
+          qty: i.quantity,
+          price: i.price,
+          image: i.image,
+        })),
+      })),
+    )
+  }, [])
+
+  const allOrders: Order[] = [...storedOrders, ...orders]
+
   // ====== HANDLERS ======
 
   const handleToggleOrder = useCallback((orderId: string) => {
@@ -245,7 +293,21 @@ export default function UserDashboard() {
 
   const handleMoveToCart = useCallback((item: WishlistItem) => {
     if (!item.inStock) return
+    addToStoredCart([{ id: item.id, name: item.name, price: item.price, image: item.image, quantity: 1 }])
+    setWishlist(prev => prev.filter(w => w.id !== item.id))
     toast({ title: 'Added to Cart!', description: `${item.name} has been moved to your cart.` })
+  }, [toast])
+
+  const handleReorder = useCallback((order: Order) => {
+    const lines: CartLine[] = order.items.map((it, idx) => ({
+      id: Date.now() + idx,
+      name: it.name,
+      price: it.price,
+      image: it.image,
+      quantity: it.qty,
+    }))
+    addToStoredCart(lines)
+    toast({ title: 'Reordered!', description: `${order.items.length} item(s) added to your cart.` })
   }, [toast])
 
   const handleOpenAddressDialog = useCallback((addr?: Address) => {
@@ -288,11 +350,19 @@ export default function UserDashboard() {
   const handleProfileSave = useCallback(() => {
     setSettingsSaving(true)
     setTimeout(() => {
+      persistProfile(profileForm)
+      setUser(prev => ({
+        ...prev,
+        name: profileForm.name,
+        email: profileForm.email,
+        phone: profileForm.phone,
+        initials: deriveInitials(profileForm.name),
+      }))
       setSettingsSaving(false)
       setEditProfileOpen(false)
       toast({ title: 'Profile Updated!', description: 'Your profile changes have been saved successfully.' })
     }, 800)
-  }, [toast])
+  }, [toast, profileForm])
 
   const handlePasswordChange = () => {
     const curPass = passwordForm.current
@@ -345,10 +415,10 @@ export default function UserDashboard() {
           <ShoppingBag className="h-5 w-5 text-temple-gold" />
           My <span className="gold-text">Orders</span>
         </h2>
-        <Badge className="bg-temple-deep/10 text-temple-deep border-temple-deep/20 text-xs">{orders.length} orders</Badge>
+        <Badge className="bg-temple-deep/10 text-temple-deep border-temple-deep/20 text-xs">{allOrders.length} orders</Badge>
       </div>
       <div className="space-y-3">
-        {orders.map((order, idx) => (
+        {allOrders.map((order, idx) => (
           <Card
             key={order.id}
             className={`border-temple-gold/20 bg-white overflow-hidden animate-fade-in ${idx > 0 ? 'stagger-' + Math.min(idx, 5) : ''}`}
@@ -403,7 +473,8 @@ export default function UserDashboard() {
                 </div>
                 <OrderTrackingSteps status={order.status} />
                 <div className="flex justify-end mt-4 gap-2">
-                  <Button size="sm" className="text-xs bg-temple-gold hover:bg-temple-brass text-white">
+                  <Button size="sm" onClick={() => handleReorder(order)}
+                    className="text-xs bg-temple-gold hover:bg-temple-brass text-white">
                     <ShoppingBag className="h-3 w-3 mr-1" />Reorder
                   </Button>
                 </div>
@@ -430,7 +501,7 @@ export default function UserDashboard() {
             <Heart className="h-12 w-12 text-temple-gold/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-temple-deep mb-2">Your wishlist is empty</h3>
             <p className="text-muted-foreground text-sm mb-4">Browse our collection and add items you love.</p>
-            <Link href="/">
+            <Link href="/collection">
               <Button className="bg-temple-gold hover:bg-temple-brass text-white">
                 <ShoppingBag className="h-4 w-4 mr-2" />Browse Collection
               </Button>
@@ -622,7 +693,7 @@ export default function UserDashboard() {
               <Label className="text-xs font-medium text-muted-foreground">Member Since</Label>
               <Input
                 type="text"
-                value={userData.memberSince}
+                value={user.memberSince}
                 disabled
                 className="mt-1 border-temple-gold/20 bg-muted/50 cursor-not-allowed"
               />
@@ -630,7 +701,18 @@ export default function UserDashboard() {
           </div>
           <Button className="bg-temple-gold hover:bg-temple-brass text-white" onClick={() => {
             setSettingsSaving(true)
-            setTimeout(() => { setSettingsSaving(false); toast({ title: 'Profile Updated!', description: 'Your profile information has been saved.' }) }, 800)
+            setTimeout(() => {
+              persistProfile(profileForm)
+              setUser(prev => ({
+                ...prev,
+                name: profileForm.name,
+                email: profileForm.email,
+                phone: profileForm.phone,
+                initials: deriveInitials(profileForm.name),
+              }))
+              setSettingsSaving(false)
+              toast({ title: 'Profile Updated!', description: 'Your profile information has been saved.' })
+            }, 800)
           }} disabled={settingsSaving}>
             {settingsSaving ? <><span className="animate-spin mr-2">{'\u25CB'}</span>Saving...</> : <><Save className="h-4 w-4 mr-2" />Save Changes</>}
           </Button>
@@ -758,7 +840,7 @@ export default function UserDashboard() {
                 </Button>
               </Link>
               <div className="w-8 h-8 rounded-full bg-temple-gold/20 flex items-center justify-center text-temple-gold text-xs font-bold">
-                {userData.initials}
+                {user.initials}
               </div>
             </div>
           </div>
@@ -780,7 +862,7 @@ export default function UserDashboard() {
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-[3px] border-temple-gold bg-gradient-to-br from-temple-gold/20 to-temple-saffron/20 flex items-center justify-center animate-glow">
-                    <span className="text-2xl sm:text-3xl font-bold gold-text-static">{userData.initials}</span>
+                    <span className="text-2xl sm:text-3xl font-bold gold-text-static">{user.initials}</span>
                   </div>
                   {/* Diya indicator */}
                   <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-temple-gold flex items-center justify-center shadow-md">
@@ -791,14 +873,14 @@ export default function UserDashboard() {
                 {/* User Info */}
                 <div className="flex-1 text-center sm:text-left">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-temple-deep">{userData.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-temple-deep">{user.name}</h1>
                     <Badge className="bg-gradient-to-r from-temple-gold to-temple-saffron text-white border-0 text-xs w-fit">
-                      <Crown className="h-3 w-3 mr-1" />{userData.membership}
+                      <Crown className="h-3 w-3 mr-1" />{user.membership}
                     </Badge>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-3">
-                    <span className="flex items-center gap-1 justify-center sm:justify-start"><Mail className="h-3.5 w-3.5" />{userData.email}</span>
-                    <span className="flex items-center gap-1 justify-center sm:justify-start"><CalendarDays className="h-3.5 w-3.5" />Member since {userData.memberSince}</span>
+                    <span className="flex items-center gap-1 justify-center sm:justify-start"><Mail className="h-3.5 w-3.5" />{user.email}</span>
+                    <span className="flex items-center gap-1 justify-center sm:justify-start"><CalendarDays className="h-3.5 w-3.5" />Member since {user.memberSince}</span>
                   </div>
                   <Button
                     className="bg-temple-gold hover:bg-temple-brass text-white"
@@ -1112,8 +1194,16 @@ export default function UserDashboard() {
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {
+                try {
+                  localStorage.removeItem(PROFILE_KEY)
+                  localStorage.removeItem(CART_KEY)
+                  localStorage.removeItem(ORDERS_KEY)
+                } catch { /* storage unavailable */ }
+                setUser(userData)
+                setProfileForm({ name: userData.name, email: userData.email, phone: userData.phone })
+                setStoredOrders([])
                 setDeleteAccountDialogOpen(false)
-                toast({ title: 'Account Deletion Requested', description: 'Your account deletion request has been submitted.' })
+                toast({ title: 'Account Deleted', description: 'Your local account data has been cleared.' })
               }}
             >
               Yes, Delete My Account

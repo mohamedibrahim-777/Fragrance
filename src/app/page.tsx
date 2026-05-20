@@ -14,13 +14,15 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import {
-  Dialog, DialogContent, DialogTitle
+  Dialog, DialogContent, DialogTitle, DialogDescription
 } from '@/components/ui/dialog'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter
 } from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
+import { loadCart, saveCart, type CartLine } from '@/lib/cart'
+import { addOrder } from '@/lib/orders'
 
 // ====== TYPES ======
 interface Product {
@@ -143,6 +145,10 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
   return <div ref={ref}>{count}{suffix}</div>
 }
 
+// Round computed SVG coords to a fixed precision so server and client
+// serialize identical attribute strings (prevents hydration mismatch).
+const svgCoord = (n: number) => Math.round(n * 1000) / 1000
+
 // ====== KOLAM SVG PATTERN ======
 function KolamPattern({ className = '' }: { className?: string }) {
   return (
@@ -154,14 +160,14 @@ function KolamPattern({ className = '' }: { className?: string }) {
       {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
         <line key={angle}
           x1="100" y1="100"
-          x2={100 + 80 * Math.cos((angle * Math.PI) / 180)}
-          y2={100 + 80 * Math.sin((angle * Math.PI) / 180)}
+          x2={svgCoord(100 + 80 * Math.cos((angle * Math.PI) / 180))}
+          y2={svgCoord(100 + 80 * Math.sin((angle * Math.PI) / 180))}
           stroke="#C5972E" strokeWidth="0.5" />
       ))}
       {[0, 45, 90, 135].map(angle => (
         <circle key={`d${angle}`}
-          cx={100 + 70 * Math.cos((angle * Math.PI) / 180)}
-          cy={100 + 70 * Math.sin((angle * Math.PI) / 180)}
+          cx={svgCoord(100 + 70 * Math.cos((angle * Math.PI) / 180))}
+          cy={svgCoord(100 + 70 * Math.sin((angle * Math.PI) / 180))}
           r="4" fill="#C5972E" />
       ))}
     </svg>
@@ -178,14 +184,14 @@ function MandalaSpin({ size = 120, className = '' }: { size?: number; className?
         <circle cx="60" cy="60" r="35" stroke="url(#mandalaGold)" strokeWidth="0.5" />
         {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(angle => (
           <line key={angle} x1="60" y1="60"
-            x2={60 + 55 * Math.cos((angle * Math.PI) / 180)}
-            y2={60 + 55 * Math.sin((angle * Math.PI) / 180)}
+            x2={svgCoord(60 + 55 * Math.cos((angle * Math.PI) / 180))}
+            y2={svgCoord(60 + 55 * Math.sin((angle * Math.PI) / 180))}
             stroke="#C5972E" strokeWidth="0.3" />
         ))}
         {[0, 60, 120, 180, 240, 300].map(angle => (
           <circle key={`p${angle}`}
-            cx={60 + 50 * Math.cos((angle * Math.PI) / 180)}
-            cy={60 + 50 * Math.sin((angle * Math.PI) / 180)}
+            cx={svgCoord(60 + 50 * Math.cos((angle * Math.PI) / 180))}
+            cy={svgCoord(60 + 50 * Math.sin((angle * Math.PI) / 180))}
             r="3" fill="#C5972E" opacity="0.5" />
         ))}
         <circle cx="60" cy="60" r="8" fill="#C5972E" opacity="0.3" />
@@ -285,12 +291,26 @@ export default function Home() {
   const { toast } = useToast()
 
   const [cart, setCart] = useState<CartItem[]>([])
+  const cartHydrated = useRef(false)
   const [wishlist, setWishlist] = useState<number[]>([])
+
+  // Load the shared cart from localStorage on mount, then keep it in sync.
+  useEffect(() => {
+    setCart(loadCart() as CartItem[])
+    cartHydrated.current = true
+  }, [])
+
+  useEffect(() => {
+    if (!cartHydrated.current) return
+    saveCart(cart as CartLine[])
+  }, [cart])
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [lastOrderId, setLastOrderId] = useState<string | null>(null)
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [email, setEmail] = useState('')
@@ -371,6 +391,15 @@ export default function Home() {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
+  const handlePlaceOrder = useCallback(() => {
+    if (cart.length === 0) return
+    const order = addOrder(cart as CartLine[], cartTotal)
+    setLastOrderId(order.id)
+    setCart([])
+    setCartOpen(false)
+    toast({ title: 'Order Placed!', description: `Order ${order.id} confirmed. Thank you!` })
+  }, [cart, cartTotal, toast])
+
   const filteredProducts = products.filter(p => {
     const matchCategory = activeCategory === 'All' || p.category === activeCategory
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -426,7 +455,7 @@ export default function Home() {
             <nav className="hidden lg:flex items-center gap-1">
               {[
                 { label: 'Home', href: '#home' },
-                { label: 'Collections', href: '#products' },
+                { label: 'Collections', href: '/collection' },
                 { label: 'About', href: '#heritage' },
                 { label: 'Pooja Guide', href: '#pooja-guide' },
                 { label: 'Contact', href: '#contact' }
@@ -450,11 +479,11 @@ export default function Home() {
                 />
               )}
               <Button variant="ghost" size="icon" onClick={() => { setShowSearch(!showSearch); if (showSearch) setSearchQuery('') }}
-                className="text-temple-deep/70 hover:text-temple-saffron h-9 w-9">
+                className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
                 <Search className="w-[18px] h-[18px]" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)}
-                className="relative text-temple-deep/70 hover:text-temple-saffron h-9 w-9">
+                className="relative text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
                 <ShoppingCart className="w-[18px] h-[18px]" />
                 {cartCount > 0 && (
                   <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center p-0 bg-temple-saffron text-white text-[9px] animate-diya">
@@ -463,38 +492,45 @@ export default function Home() {
                 )}
               </Button>
               <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="text-temple-deep/70 hover:text-temple-saffron h-9 w-9">
+                <Button variant="ghost" size="icon" className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
                   <User className="w-[18px] h-[18px]" />
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon" className="lg:hidden text-temple-deep/70"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Button variant="ghost" size="icon" aria-label="Open menu"
+                className="lg:hidden text-temple-deep/70 h-10 w-10"
+                onClick={() => setMobileMenuOpen(true)}>
+                <Menu className="w-5 h-5" />
               </Button>
             </div>
           </div>
 
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-temple-gold/10 pb-3 animate-fade-in">
-              <nav className="flex flex-col gap-0.5">
+          {/* Mobile Menu Drawer */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetContent side="left" className="w-[82%] max-w-sm bg-temple-cream border-r-temple-gold/15 p-0">
+              <SheetHeader className="border-b border-temple-gold/12 px-5 py-4">
+                <SheetTitle className="flex items-center gap-3 text-temple-deep">
+                  <img src="/images/logo.png" alt="Shri Fragrance Logo" width={36} height={36} className="rounded-full" />
+                  <span className="text-base font-bold tracking-wider gold-text-static">SHRI FRAGRANCE</span>
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-1 px-3 py-4">
                 {[
                   { label: 'Home', href: '#home' },
-                  { label: 'Collections', href: '#products' },
+                  { label: 'Collections', href: '/collection' },
                   { label: 'About', href: '#heritage' },
                   { label: 'Pooja Guide', href: '#pooja-guide' },
                   { label: 'Contact', href: '#contact' }
                 ].map(item => (
                   <Link key={item.label} href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-temple-deep/80 hover:bg-temple-gold/8 rounded-md">
+                    className="flex items-center justify-between px-4 py-3.5 text-base font-medium text-temple-deep/85 hover:bg-temple-gold/10 active:bg-temple-gold/15 rounded-lg transition-colors">
                     {item.label}
                     <ChevronRight className="w-4 h-4 opacity-30" />
                   </Link>
                 ))}
               </nav>
-            </div>
-          )}
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
@@ -550,16 +586,16 @@ export default function Home() {
                 sourced from ancient temple traditions across South India.
               </p>
 
-              <div className="flex flex-wrap items-center gap-4 mb-16">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 mb-10 sm:mb-16">
                 <Button asChild size="lg"
-                  className="saffron-gradient text-white hover:brightness-110 px-8 py-6 text-sm font-semibold shadow-lg shadow-temple-saffron/30 transition-all animate-glow">
+                  className="w-full sm:w-auto saffron-gradient text-white hover:brightness-110 px-8 py-6 text-base sm:text-sm font-semibold shadow-lg shadow-temple-saffron/30 transition-all animate-glow">
                   <a href="#products">
                     <Flame className="w-4 h-4 mr-2" />
                     Explore Collection
                   </a>
                 </Button>
                 <Button asChild variant="outline" size="lg"
-                  className="border-temple-gold/30 text-white/90 hover:bg-temple-gold/10 hover:border-temple-gold/50 px-8 py-6 text-sm bg-transparent">
+                  className="w-full sm:w-auto border-temple-gold/30 text-white/90 hover:bg-temple-gold/10 hover:border-temple-gold/50 px-8 py-6 text-base sm:text-sm bg-transparent">
                   <a href="#pooja-guide">
                     <Lamp className="w-4 h-4 mr-2" />
                     Pooja Guide
@@ -653,10 +689,15 @@ export default function Home() {
             {/* Category Tabs */}
             <div className="mb-10 reveal-up">
               <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                <TabsList className="mx-auto flex-wrap h-auto gap-1 bg-white/60 border border-temple-gold/10 p-1.5">
+                <TabsList className="flex w-full sm:w-auto sm:mx-auto justify-start sm:justify-center flex-nowrap overflow-x-auto h-auto gap-1.5 bg-white/60 border border-temple-gold/10 p-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {['All', 'Premium', 'Floral', 'Classic', 'Herbal'].map(cat => (
                     <TabsTrigger key={cat} value={cat}
-                      className="data-[state=active]:saffron-gradient data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-temple-saffron/20 text-xs px-5 py-2 rounded-lg transition-all">
+                      style={activeCategory === cat ? {
+                        background: 'linear-gradient(135deg, #D4722A 0%, #C5972E 50%, #D4722A 100%)',
+                        color: '#fff',
+                        boxShadow: '0 4px 12px -2px rgba(212, 114, 42, 0.35)',
+                      } : undefined}
+                      className="shrink-0 font-medium text-temple-deep/70 hover:text-temple-deep data-[state=active]:text-white text-sm sm:text-xs px-5 py-2.5 min-h-[40px] rounded-lg transition-all">
                       {cat}
                     </TabsTrigger>
                   ))}
@@ -671,7 +712,17 @@ export default function Home() {
                 const isWished = wishlist.includes(product.id)
                 return (
                   <div key={product.id} className="reveal-scale" style={{ transitionDelay: `${idx * 80}ms` }}>
-                    <div className="temple-card bg-white overflow-hidden">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setQuickViewProduct(product)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setQuickViewProduct(product)
+                        }
+                      }}
+                      className="group temple-card bg-white overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-saffron/60 transition-all hover:-translate-y-0.5">
                       <div className="relative overflow-hidden">
                         <div className="relative aspect-square bg-gradient-to-b from-temple-cream/60 to-white p-6">
                           <img src={product.image} alt={product.name} loading="lazy"
@@ -688,18 +739,18 @@ export default function Home() {
                         <Badge className="absolute top-3 right-3 bg-temple-deep text-white text-[10px] px-2.5 py-0.5 shadow-sm animate-gold-border">
                           -{discount}%
                         </Badge>
-                        {/* Quick actions */}
-                        <div className="absolute bottom-3 right-3 flex flex-col gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        {/* Wishlist quick action */}
+                        <div className="absolute bottom-3 right-3 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                           <Button size="icon" variant="secondary"
                             className="h-9 w-9 rounded-full bg-white/95 shadow-md hover:bg-white"
-                            onClick={() => toggleWishlist(product.id)}>
+                            onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id) }}
+                            aria-label="Wishlist">
                             <Heart className={`w-4 h-4 ${isWished ? 'fill-red-500 text-red-500' : ''}`} />
                           </Button>
-                          <Button size="icon" variant="secondary"
-                            className="h-9 w-9 rounded-full bg-white/95 shadow-md hover:bg-white"
-                            onClick={() => setQuickViewProduct(product)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                        </div>
+                        {/* Tap-to-view hint */}
+                        <div className="absolute inset-x-0 bottom-0 px-4 py-2 bg-gradient-to-t from-temple-deep/85 via-temple-deep/55 to-transparent text-[10px] tracking-wider font-semibold text-temple-gold uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 pointer-events-none">
+                          <Eye className="w-3 h-3" /> Tap to view details
                         </div>
                       </div>
                       <CardContent className="p-5">
@@ -720,8 +771,8 @@ export default function Home() {
                         </div>
                       </CardContent>
                       <CardFooter className="p-5 pt-0">
-                        <Button onClick={() => addToCart(product)}
-                          className="w-full saffron-gradient text-white hover:brightness-110 font-semibold text-sm h-10 transition-all shadow-md shadow-temple-saffron/15"
+                        <Button onClick={(e) => { e.stopPropagation(); addToCart(product) }}
+                          className="w-full bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold text-sm h-10 transition-all shadow-md shadow-temple-deep/25"
                           size="sm">
                           <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Add to Cart
                         </Button>
@@ -1131,7 +1182,8 @@ export default function Home() {
                   <span>Total</span>
                   <span className="text-lg">₹{cartTotal}</span>
                 </div>
-                <Button className="w-full saffron-gradient text-white hover:brightness-110 py-5 font-semibold shadow-lg shadow-temple-saffron/20">
+                <Button onClick={() => { setLastOrderId(null); setCheckoutOpen(true) }}
+                  className="w-full saffron-gradient text-white hover:brightness-110 py-5 font-semibold shadow-lg shadow-temple-saffron/20">
                   Proceed to Checkout
                 </Button>
               </div>
@@ -1141,12 +1193,55 @@ export default function Home() {
         </SheetContent>
       </Sheet>
 
+      {/* ====== CHECKOUT DIALOG ====== */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="max-w-md bg-temple-cream">
+          {lastOrderId ? (
+            <div className="text-center py-6">
+              <DialogTitle className="text-xl font-bold text-temple-deep mb-2">Order Confirmed</DialogTitle>
+              <DialogDescription className="sr-only">Your order has been confirmed successfully.</DialogDescription>
+              <div className="w-14 h-14 rounded-full saffron-gradient flex items-center justify-center mx-auto mb-4">
+                <ShoppingCart className="w-7 h-7 text-white" />
+              </div>
+              <p className="text-sm text-temple-gold/80">Your order <span className="font-semibold text-temple-deep">{lastOrderId}</span> has been placed.</p>
+              <p className="text-xs text-temple-gold/60 mt-1">You can track it in your dashboard.</p>
+              <Button onClick={() => setCheckoutOpen(false)}
+                className="mt-6 w-full saffron-gradient text-white hover:brightness-110 font-semibold">
+                Continue Shopping
+              </Button>
+            </div>
+          ) : (
+            <>
+              <DialogTitle className="text-lg font-bold text-temple-deep">Checkout</DialogTitle>
+              <DialogDescription className="sr-only">Review your cart and place your order.</DialogDescription>
+              <div className="max-h-64 overflow-y-auto space-y-2 py-2">
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span className="text-temple-deep truncate pr-2">{item.name} × {item.quantity}</span>
+                    <span className="font-medium text-temple-deep shrink-0">₹{item.price * item.quantity}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between font-bold text-temple-deep border-t border-temple-gold/15 pt-3">
+                <span>Total</span>
+                <span>₹{cartTotal}</span>
+              </div>
+              <Button onClick={handlePlaceOrder} disabled={cart.length === 0}
+                className="w-full saffron-gradient text-white hover:brightness-110 py-5 font-semibold">
+                Place Order
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* ====== QUICK VIEW DIALOG ====== */}
       <Dialog open={!!quickViewProduct} onOpenChange={() => setQuickViewProduct(null)}>
         <DialogContent className="max-w-lg bg-temple-cream">
           {quickViewProduct && (
             <>
               <DialogTitle className="sr-only">{quickViewProduct.name}</DialogTitle>
+              <DialogDescription className="sr-only">{quickViewProduct.subtitle} — {quickViewProduct.fragrance}</DialogDescription>
               <div className="flex flex-col sm:flex-row gap-5 p-2">
                 <div className="flex-1 bg-white rounded-xl p-4">
                   <img src={quickViewProduct.image} alt={quickViewProduct.name} className="w-full h-auto object-contain" />
@@ -1171,7 +1266,7 @@ export default function Home() {
                     <span className="text-sm text-temple-gold/40 line-through">₹{quickViewProduct.originalPrice}</span>
                   </div>
                   <Button onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null) }}
-                    className="w-full saffron-gradient text-white hover:brightness-110 font-semibold shadow-md shadow-temple-saffron/20">
+                    className="w-full bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 font-semibold shadow-md shadow-temple-deep/25">
                     <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
                   </Button>
                 </div>
