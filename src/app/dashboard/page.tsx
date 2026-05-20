@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from '@/lib/auth'
 import {
   ShoppingBag, Heart, Award, MapPin, User, Settings,
   ArrowLeft, Package, CheckCircle2, Truck,
@@ -211,6 +213,26 @@ function OrderTrackingSteps({ status }: { status: Order['status'] }) {
 
 export default function UserDashboard() {
   const { toast } = useToast()
+  const router = useRouter()
+  const [session, setSession] = useState<Session | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  useEffect(() => {
+    ensureAdminSeed()
+    const refresh = () => {
+      const s = getSession()
+      setSession(s)
+      setAuthChecked(true)
+      if (!s) router.replace('/login?next=/dashboard')
+    }
+    refresh()
+    return subscribeAuth(refresh)
+  }, [router])
+
+  const handleLogout = useCallback(() => {
+    authLogout()
+    router.replace('/')
+  }, [router])
 
   // Tab state
   const [activeTab, setActiveTab] = useState('orders')
@@ -229,20 +251,26 @@ export default function UserDashboard() {
   const [user, setUser] = useState(userData)
   const [profileForm, setProfileForm] = useState({ name: userData.name, email: userData.email, phone: userData.phone })
 
-  // Load any previously saved profile from localStorage (client-only, after mount
-  // to avoid hydration mismatch with the static-exported HTML).
+  // Seed profile from auth session first (so the dashboard reflects the
+  // logged-in user), then layer on any saved profile edits.
   useEffect(() => {
+    if (!session) return
+    let name = session.name
+    let email = session.email
+    let phone = ''
     try {
       const raw = localStorage.getItem(PROFILE_KEY)
-      if (!raw) return
-      const saved = JSON.parse(raw) as { name?: string; email?: string; phone?: string }
-      const name = saved.name ?? userData.name
-      const email = saved.email ?? userData.email
-      const phone = saved.phone ?? userData.phone
-      setUser(prev => ({ ...prev, name, email, phone, initials: deriveInitials(name) }))
-      setProfileForm({ name, email, phone })
+      if (raw) {
+        const saved = JSON.parse(raw) as { name?: string; email?: string; phone?: string }
+        if (saved.email && saved.email === session.email) {
+          name = saved.name ?? name
+          phone = saved.phone ?? phone
+        }
+      }
     } catch { /* ignore corrupt/unavailable storage */ }
-  }, [])
+    setUser(prev => ({ ...prev, name, email, phone, initials: deriveInitials(name) }))
+    setProfileForm({ name, email, phone })
+  }, [session])
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' })
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>({
@@ -812,6 +840,17 @@ export default function UserDashboard() {
 
   // ====== MAIN RENDER ======
 
+  if (!authChecked || !session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-temple-cream">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-full border-4 border-temple-saffron border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-sm text-temple-deep/60">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-temple-cream">
       {/* ====== TOP NAV ====== */}
@@ -834,11 +873,17 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/admin">
-                <Button variant="ghost" size="sm" className="text-temple-cream/80 hover:text-temple-gold hover:bg-temple-gold/10 text-xs">
-                  <Store className="h-4 w-4 mr-1" />Admin
-                </Button>
-              </Link>
+              {session.role === 'admin' && (
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm" className="text-temple-cream/80 hover:text-temple-gold hover:bg-temple-gold/10 text-xs">
+                    <Store className="h-4 w-4 mr-1" />Admin
+                  </Button>
+                </Link>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleLogout}
+                className="text-temple-cream/80 hover:text-temple-gold hover:bg-temple-gold/10 text-xs">
+                <Lock className="h-4 w-4 mr-1" /> Logout
+              </Button>
               <div className="w-8 h-8 rounded-full bg-temple-gold/20 flex items-center justify-center text-temple-gold text-xs font-bold">
                 {user.initials}
               </div>

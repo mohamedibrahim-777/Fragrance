@@ -23,6 +23,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { loadCart, saveCart, type CartLine } from '@/lib/cart'
 import { addOrder } from '@/lib/orders'
+import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from '@/lib/auth'
+import { LogOut, LogIn } from 'lucide-react'
 
 // ====== TYPES ======
 interface Product {
@@ -319,6 +321,18 @@ function OrnamentalDivider({ className = '' }: { className?: string }) {
 export default function Home() {
   const { toast } = useToast()
 
+  const [session, setSession] = useState<Session | null>(null)
+  useEffect(() => {
+    ensureAdminSeed()
+    const refresh = () => setSession(getSession())
+    refresh()
+    return subscribeAuth(refresh)
+  }, [])
+  const handleAuthLogout = useCallback(() => {
+    authLogout()
+    toast({ title: 'Signed out', description: 'See you again soon.' })
+  }, [toast])
+
   const [cart, setCart] = useState<CartItem[]>([])
   const cartHydrated = useRef(false)
   const [wishlist, setWishlist] = useState<number[]>([])
@@ -398,6 +412,26 @@ export default function Home() {
     })
     toast({ title: 'Added to Cart!', description: `${product.name} has been added to your cart.` })
   }, [toast])
+
+  const addPoojaSet = useCallback(() => {
+    const bundle: Product = {
+      id: 999,
+      name: 'Complete Pooja Collection',
+      subtitle: 'Festive Bundle • 40% Off',
+      fragrance: 'Curated set of sacred fragrances',
+      description: 'A handpicked festive bundle of our most beloved temple fragrances — perfect for daily pooja and special celebrations.',
+      price: 1499,
+      originalPrice: 2499,
+      image: '/images/product3.png',
+      category: 'Premium',
+      badge: 'Festive Set',
+      badgeColor: 'bg-temple-amber text-temple-deep',
+      rating: 4.9,
+      reviews: 412,
+    }
+    addToCart(bundle)
+    setCartOpen(true)
+  }, [addToCart])
 
   const updateQuantity = useCallback((id: number, delta: number) => {
     setCart(prev => prev.map(item => {
@@ -520,11 +554,48 @@ export default function Home() {
                   </Badge>
                 )}
               </Button>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
-                  <User className="w-[18px] h-[18px]" />
-                </Button>
-              </Link>
+              {session ? (
+                <>
+                  <Link href={session.role === 'admin' ? '/admin' : '/dashboard'} className="hidden sm:block">
+                    <Button variant="ghost" size="sm"
+                      className="text-temple-deep/80 hover:text-temple-saffron hover:bg-temple-gold/5 gap-2 px-2">
+                      <span className="w-7 h-7 rounded-full saffron-gradient text-white text-[11px] font-bold flex items-center justify-center">
+                        {session.name.slice(0, 1).toUpperCase()}
+                      </span>
+                      <span className="text-xs font-medium max-w-[110px] truncate">{session.name.split(' ')[0]}</span>
+                    </Button>
+                  </Link>
+                  <Link href={session.role === 'admin' ? '/admin' : '/dashboard'} className="sm:hidden">
+                    <Button variant="ghost" size="icon" className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
+                      <User className="w-[18px] h-[18px]" />
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="icon" onClick={handleAuthLogout} aria-label="Logout"
+                    className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
+                    <LogOut className="w-[18px] h-[18px]" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="hidden sm:block">
+                    <Button variant="ghost" size="sm"
+                      className="text-temple-deep/80 hover:text-temple-saffron text-xs font-medium">
+                      <LogIn className="w-4 h-4 mr-1" /> Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/signup" className="hidden sm:block">
+                    <Button size="sm"
+                      className="bg-temple-deep text-temple-gold hover:bg-temple-maroon border border-temple-gold/30 text-xs font-semibold">
+                      Sign Up
+                    </Button>
+                  </Link>
+                  <Link href="/login" className="sm:hidden">
+                    <Button variant="ghost" size="icon" className="text-temple-deep/70 hover:text-temple-saffron h-10 w-10">
+                      <User className="w-[18px] h-[18px]" />
+                    </Button>
+                  </Link>
+                </>
+              )}
               <Button variant="ghost" size="icon" aria-label="Open menu"
                 className="lg:hidden text-temple-deep/70 h-10 w-10"
                 onClick={() => setMobileMenuOpen(true)}>
@@ -851,7 +922,7 @@ export default function Home() {
                 Save <span className="text-temple-amber font-bold text-xl">40%</span> This Festive Season
                 — Includes Chandanam, Nag Champa, Rose Pushpam & Sambrani
               </p>
-              <Button size="lg"
+              <Button size="lg" onClick={addPoojaSet}
                 className="saffron-gradient text-white hover:brightness-110 px-8 py-6 text-sm font-bold shadow-xl shadow-temple-saffron/25 transition-all animate-glow">
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Shop Pooja Set — ₹1,499

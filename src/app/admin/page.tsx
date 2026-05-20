@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
@@ -263,11 +268,118 @@ function CustomerStatusBadge({ status }: { status: string }) {
 
 // ── Main Page ──────────────────────────────────────────
 export default function AdminDashboard() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [session, setSession] = useState<Session | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    ensureAdminSeed();
+    const refresh = () => {
+      const s = getSession();
+      setSession(s);
+      setAuthChecked(true);
+      if (!s) router.replace('/login?next=/admin');
+      else if (s.role !== 'admin') router.replace('/dashboard');
+    };
+    refresh();
+    return subscribeAuth(refresh);
+  }, [router]);
+
+  const handleLogout = useCallback(() => {
+    authLogout();
+    router.replace('/login');
+  }, [router]);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderFilter, setOrderFilter] = useState("All");
+
+  // ── SETTINGS STATE ──────────────────────────────────
+  const [general, setGeneral] = useState({
+    storeName: "Shri Fragrance",
+    storeEmail: "admin@shrifragrance.com",
+    currency: "INR (₹)",
+    timezone: "Asia/Kolkata (IST)",
+  });
+  const [themeColor, setThemeColor] = useState<"maroon" | "templeGold" | "saffron">("maroon");
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifs, setNotifs] = useState([
+    { label: "New Order Alerts", desc: "Get notified for every new order", enabled: true },
+    { label: "Low Stock Warnings", desc: "Alert when products fall below threshold", enabled: true },
+    { label: "Customer Reviews", desc: "Notifications for new product reviews", enabled: false },
+    { label: "Revenue Milestones", desc: "Celebrate revenue achievements", enabled: true },
+  ]);
+  const [pwd, setPwd] = useState({ current: "", next: "" });
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const g = localStorage.getItem("shri:admin:general");
+      if (g) setGeneral(JSON.parse(g));
+      const a = localStorage.getItem("shri:admin:appearance");
+      if (a) {
+        const parsed = JSON.parse(a);
+        if (parsed.themeColor) setThemeColor(parsed.themeColor);
+        if (typeof parsed.darkMode === "boolean") setDarkMode(parsed.darkMode);
+      }
+      const n = localStorage.getItem("shri:admin:notifs");
+      if (n) setNotifs(JSON.parse(n));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Reflect dark mode on the admin root
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.classList.toggle("admin-dark", darkMode);
+  }, [darkMode]);
+
+  const saveGeneral = useCallback(() => {
+    try { localStorage.setItem("shri:admin:general", JSON.stringify(general)); } catch {}
+    toast({ title: "Settings saved", description: "General settings updated." });
+  }, [general, toast]);
+
+  const persistAppearance = useCallback((next: { themeColor?: typeof themeColor; darkMode?: boolean }) => {
+    const merged = { themeColor: next.themeColor ?? themeColor, darkMode: next.darkMode ?? darkMode };
+    try { localStorage.setItem("shri:admin:appearance", JSON.stringify(merged)); } catch {}
+  }, [themeColor, darkMode]);
+
+  const pickTheme = useCallback((c: typeof themeColor) => {
+    setThemeColor(c);
+    persistAppearance({ themeColor: c });
+    toast({ title: "Theme updated", description: `Primary color set to ${c}.` });
+  }, [persistAppearance, toast]);
+
+  const toggleDark = useCallback(() => {
+    setDarkMode(prev => {
+      const next = !prev;
+      persistAppearance({ darkMode: next });
+      return next;
+    });
+  }, [persistAppearance]);
+
+  const toggleNotif = useCallback((i: number) => {
+    setNotifs(prev => {
+      const next = prev.map((n, idx) => idx === i ? { ...n, enabled: !n.enabled } : n);
+      try { localStorage.setItem("shri:admin:notifs", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const updatePassword = useCallback(() => {
+    if (!pwd.current || !pwd.next) {
+      toast({ title: "Missing fields", description: "Enter both current and new password." });
+      return;
+    }
+    if (pwd.next.length < 6) {
+      toast({ title: "Password too short", description: "Use at least 6 characters." });
+      return;
+    }
+    setPwd({ current: "", next: "" });
+    toast({ title: "Password updated", description: "Your password has been changed." });
+  }, [pwd, toast]);
 
   // ── SECTION RENDERERS ──────────────────────────────
 
@@ -819,22 +931,26 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Store Name</label>
-              <Input defaultValue="Shri Fragrance" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              <Input value={general.storeName} onChange={(e) => setGeneral(g => ({ ...g, storeName: e.target.value }))}
+                className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Store Email</label>
-              <Input defaultValue="admin@shrifragrance.com" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              <Input value={general.storeEmail} onChange={(e) => setGeneral(g => ({ ...g, storeEmail: e.target.value }))}
+                className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Currency</label>
-              <Input defaultValue="INR (₹)" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              <Input value={general.currency} onChange={(e) => setGeneral(g => ({ ...g, currency: e.target.value }))}
+                className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Timezone</label>
-              <Input defaultValue="Asia/Kolkata (IST)" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              <Input value={general.timezone} onChange={(e) => setGeneral(g => ({ ...g, timezone: e.target.value }))}
+                className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
           </div>
-          <Button size="sm" className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
+          <Button size="sm" onClick={saveGeneral} className="text-xs gap-1 text-white" style={{ backgroundColor: colors.maroon }}>
             <Save className="w-3.5 h-3.5" /> Save Changes
           </Button>
         </CardContent>
@@ -854,9 +970,12 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-500">Primary brand color for your store</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: colors.maroon }} />
-              <span className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: colors.templeGold }} />
-              <span className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: colors.saffron }} />
+              {(["maroon", "templeGold", "saffron"] as const).map(key => (
+                <button key={key} onClick={() => pickTheme(key)} aria-label={`Set theme to ${key}`}
+                  className={`w-7 h-7 rounded-full border-2 shadow transition-all ${themeColor === key ? "ring-2 ring-offset-2 scale-110" : "border-white"}`}
+                  style={{ backgroundColor: colors[key], ...(themeColor === key ? { boxShadow: `0 0 0 2px ${colors[key]}` } : {}) }}
+                />
+              ))}
             </div>
           </div>
           <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: `${colors.templeGold}15` }}>
@@ -864,8 +983,10 @@ export default function AdminDashboard() {
               <p className="text-sm font-medium">Dark Mode</p>
               <p className="text-xs text-gray-500">Enable dark mode for admin panel</p>
             </div>
-            <button className="relative w-11 h-6 rounded-full bg-gray-300 transition-colors">
-              <span className="absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow transition-transform" />
+            <button onClick={toggleDark} aria-label="Toggle dark mode"
+              className={`relative w-11 h-6 rounded-full transition-colors ${darkMode ? "" : "bg-gray-300"}`}
+              style={darkMode ? { backgroundColor: colors.templeGold } : undefined}>
+              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${darkMode ? "translate-x-[22px] left-0" : "left-1"}`} />
             </button>
           </div>
         </CardContent>
@@ -879,18 +1000,14 @@ export default function AdminDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {[
-            { label: "New Order Alerts", desc: "Get notified for every new order", enabled: true },
-            { label: "Low Stock Warnings", desc: "Alert when products fall below threshold", enabled: true },
-            { label: "Customer Reviews", desc: "Notifications for new product reviews", enabled: false },
-            { label: "Revenue Milestones", desc: "Celebrate revenue achievements", enabled: true },
-          ].map((setting, i) => (
+          {notifs.map((setting, i) => (
             <div key={i} className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: `${colors.templeGold}15` }}>
               <div>
                 <p className="text-sm font-medium">{setting.label}</p>
                 <p className="text-xs text-gray-500">{setting.desc}</p>
               </div>
-              <button className={`relative w-11 h-6 rounded-full transition-colors ${setting.enabled ? "" : "bg-gray-300"}`}
+              <button onClick={() => toggleNotif(i)} aria-label={`Toggle ${setting.label}`}
+                className={`relative w-11 h-6 rounded-full transition-colors ${setting.enabled ? "" : "bg-gray-300"}`}
                 style={setting.enabled ? { backgroundColor: colors.templeGold } : undefined}>
                 <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${setting.enabled ? "translate-x-[22px] left-0" : "left-1"}`} />
               </button>
@@ -910,14 +1027,18 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Current Password</label>
-              <Input type="password" placeholder="Enter current password" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              <Input type="password" placeholder="Enter current password" value={pwd.current}
+                onChange={(e) => setPwd(p => ({ ...p, current: e.target.value }))}
+                className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">New Password</label>
-              <Input type="password" placeholder="Enter new password" className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
+              <Input type="password" placeholder="Enter new password" value={pwd.next}
+                onChange={(e) => setPwd(p => ({ ...p, next: e.target.value }))}
+                className="h-9 text-sm" style={{ borderColor: `${colors.templeGold}30` }} />
             </div>
           </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30`, color: colors.maroon }}>
+          <Button variant="outline" size="sm" onClick={updatePassword} className="text-xs gap-1" style={{ borderColor: `${colors.templeGold}30`, color: colors.maroon }}>
             <Lock className="w-3.5 h-3.5" /> Update Password
           </Button>
         </CardContent>
@@ -947,6 +1068,18 @@ export default function AdminDashboard() {
     analytics: { title: "Analytics", subtitle: "Detailed insights and performance metrics" },
     settings: { title: "Settings", subtitle: "Configure your store and account preferences" },
   };
+
+  // Gate the admin panel — show a loader until auth is verified.
+  if (!authChecked || !session || session.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-temple-cream">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-full border-4 border-temple-saffron border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-sm text-temple-deep/60">Checking access...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: colors.warmCream }}>
@@ -1094,8 +1227,10 @@ export default function AdminDashboard() {
                 </Button>
               </DialogTrigger>
               <DialogContent>
+                <DialogTitle className="font-semibold text-base" style={{ color: colors.deep }}>Notifications</DialogTitle>
+                <DialogDescription className="sr-only">Recent admin notifications and alerts.</DialogDescription>
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-base" style={{ color: colors.deep }}>Notifications</h3>
+                  <h3 className="sr-only">Recent activity</h3>
                   {[
                     { title: "New order #ORD-7893 received", time: "2 min ago", type: "order" },
                     { title: "Low stock alert: Sandalwood Oil", time: "15 min ago", type: "alert" },
@@ -1112,19 +1247,26 @@ export default function AdminDashboard() {
 
             <div className="relative">
               <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-gray-100 transition-colors">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold gold-glow" style={{ backgroundColor: colors.maroon, color: colors.warmCream }}>SA</div>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold gold-glow" style={{ backgroundColor: colors.maroon, color: colors.warmCream }}>
+                  {(session?.name ?? 'SA').slice(0, 2).toUpperCase()}
+                </div>
                 <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
               </button>
               {profileOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 top-11 w-48 bg-white rounded-lg shadow-xl border py-1 z-50" style={{ borderColor: `${colors.templeGold}25` }}>
-                    {["Profile", "Settings", "Billing", "Sign Out"].map((item) => (
+                  <div className="absolute right-0 top-11 w-56 bg-white rounded-lg shadow-xl border py-2 z-50" style={{ borderColor: `${colors.templeGold}25` }}>
+                    <div className="px-4 pb-2 border-b" style={{ borderColor: `${colors.templeGold}15` }}>
+                      <p className="text-sm font-semibold" style={{ color: colors.deep }}>{session?.name}</p>
+                      <p className="text-[11px] text-gray-500 truncate">{session?.email}</p>
+                    </div>
+                    {["Settings", "Logout"].map((item) => (
                       <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                        style={item === "Sign Out" ? { color: colors.maroon } : undefined}
+                        style={item === "Logout" ? { color: colors.maroon, fontWeight: 600 } : undefined}
                         onClick={() => {
                           setProfileOpen(false);
                           if (item === "Settings") setActiveNav("settings");
+                          else if (item === "Logout") handleLogout();
                         }}>{item}</button>
                     ))}
                   </div>

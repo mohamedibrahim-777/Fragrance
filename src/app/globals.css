@@ -141,6 +141,27 @@ html[data-scroll-behavior="smooth"] {
   scroll-behavior: smooth;
 }
 
+/* ====== ADMIN DARK MODE ====== */
+html.admin-dark {
+  background-color: #1a1a1a;
+}
+html.admin-dark body {
+  background-color: #1a1a1a;
+  color: #e5e5e5;
+}
+html.admin-dark .bg-white,
+html.admin-dark [style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #262626 !important;
+  color: #e5e5e5;
+}
+html.admin-dark .text-gray-500,
+html.admin-dark .text-gray-400 {
+  color: #a3a3a3 !important;
+}
+html.admin-dark .border {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
 /* ====== LUXURY GRADIENTS ====== */
 
 .saffron-gradient {
@@ -484,12 +505,14 @@ section {
 }
 
 .temple-divider::after {
-  content: '\u0D50';
+  content: '\0950 ';
   position: relative;
   background: #FFF8E7;
   padding: 0 16px;
   color: #C5972E;
-  font-size: 20px;
+  font-size: 22px;
+  line-height: 1;
+  font-family: var(--font-tiro), 'Sanskrit Text', 'Noto Sans Devanagari', serif;
 }
 
 /* ====== ORNAMENTAL CARD STYLES ====== */
