@@ -49,6 +49,16 @@ export function saveOrders(orders: StoredOrder[]): void {
   }
 }
 
+export function cancelStoredOrder(id: string): StoredOrder | null {
+  const orders = loadOrders()
+  const idx = orders.findIndex(o => o.id === id)
+  if (idx === -1) return null
+  if (orders[idx].status !== 'Processing') return null
+  orders[idx] = { ...orders[idx], status: 'Cancelled' }
+  saveOrders(orders)
+  return orders[idx]
+}
+
 export function addOrder(
   items: CartLine[],
   total: number,

@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { addToStoredCart, CART_KEY, type CartLine } from '@/lib/cart'
-import { loadOrders, ORDERS_KEY } from '@/lib/orders'
+import { loadOrders, ORDERS_KEY, cancelStoredOrder } from '@/lib/orders'
+import { XCircle } from 'lucide-react'
 
 // ====== TYPES ======
 
@@ -40,7 +41,7 @@ interface OrderShipment { address: string; city: string; state: string; pincode:
 interface Order {
   id: string
   date: string
-  status: 'Delivered' | 'Processing' | 'Shipped'
+  status: 'Delivered' | 'Processing' | 'Shipped' | 'Cancelled'
   items: OrderItem[]
   total: number
   customer?: OrderCustomer
@@ -158,6 +159,8 @@ function getStatusBadge(status: Order['status']) {
       return <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs"><Truck className="h-3 w-3 mr-1" />Shipped</Badge>
     case 'Processing':
       return <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs"><Package className="h-3 w-3 mr-1" />Processing</Badge>
+    case 'Cancelled':
+      return <Badge className="bg-red-100 text-red-700 border-red-200 text-xs"><XCircle className="h-3 w-3 mr-1" />Cancelled</Badge>
   }
 }
 
@@ -166,6 +169,7 @@ function getStatusStep(status: Order['status']): number {
     case 'Processing': return 0
     case 'Shipped': return 1
     case 'Delivered': return 2
+    case 'Cancelled': return -1
   }
 }
 
@@ -291,6 +295,9 @@ export default function UserDashboard() {
   // Edit Profile Dialog
   const [editProfileOpen, setEditProfileOpen] = useState(false)
 
+  // Cancel order state
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
+
   // Orders placed via checkout (localStorage), shown above the mock history.
   const [storedOrders, setStoredOrders] = useState<Order[]>([])
   useEffect(() => {
@@ -312,7 +319,12 @@ export default function UserDashboard() {
     )
   }, [])
 
-  const allOrders: Order[] = [...storedOrders, ...orders]
+  const [cancelledMockIds, setCancelledMockIds] = useState<Set<string>>(new Set())
+
+  const allOrders: Order[] = [
+    ...storedOrders,
+    ...orders.map(o => cancelledMockIds.has(o.id) ? { ...o, status: 'Cancelled' as const } : o),
+  ]
 
   // ====== HANDLERS ======
 
@@ -332,6 +344,23 @@ export default function UserDashboard() {
     setWishlist(prev => prev.filter(w => w.id !== item.id))
     toast({ title: 'Added to Cart!', description: `${item.name} has been moved to your cart.` })
   }, [toast])
+
+  const handleConfirmCancel = useCallback(() => {
+    if (!cancelOrderId) return
+    const isStored = storedOrders.some(o => o.id === cancelOrderId)
+    if (isStored) {
+      cancelStoredOrder(cancelOrderId)
+      setStoredOrders(prev => prev.map(o => o.id === cancelOrderId ? { ...o, status: 'Cancelled' } : o))
+    } else {
+      setCancelledMockIds(prev => {
+        const next = new Set(prev)
+        next.add(cancelOrderId)
+        return next
+      })
+    }
+    toast({ title: 'Order Cancelled', description: `Order #${cancelOrderId} has been cancelled.` })
+    setCancelOrderId(null)
+  }, [cancelOrderId, storedOrders, toast])
 
   const handleReorder = useCallback((order: Order) => {
     const lines: CartLine[] = order.items.map((it, idx) => ({
@@ -472,6 +501,17 @@ export default function UserDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {order.status === 'Processing' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => setCancelOrderId(order.id)}
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Cancel
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -541,6 +581,16 @@ export default function UserDashboard() {
                 </div>
                 <OrderTrackingSteps status={order.status} />
                 <div className="flex justify-end mt-4 gap-2">
+                  {order.status === 'Processing' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCancelOrderId(order.id)}
+                      className="text-xs border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />Cancel Order
+                    </Button>
+                  )}
                   <Button size="sm" onClick={() => handleReorder(order)}
                     className="text-xs bg-temple-gold hover:bg-temple-brass text-white">
                     <ShoppingBag className="h-3 w-3 mr-1" />Reorder
@@ -1252,6 +1302,29 @@ export default function UserDashboard() {
             </Button>
             <Button className="bg-temple-gold hover:bg-temple-brass text-white" onClick={handlePasswordChange}>
               Update Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Order Confirmation Dialog */}
+      <Dialog open={!!cancelOrderId} onOpenChange={(open) => !open && setCancelOrderId(null)}>
+        <DialogContent className="bg-white border-red-200">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <XCircle className="h-5 w-5" />
+              Cancel Order
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel order #{cancelOrderId}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelOrderId(null)} className="border-temple-gold/30">
+              Keep Order
+            </Button>
+            <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleConfirmCancel}>
+              <XCircle className="h-4 w-4 mr-2" />Yes, Cancel Order
             </Button>
           </DialogFooter>
         </DialogContent>
