@@ -1,36 +1,21 @@
-// Shared admin-managed catalog. Single source of truth — the admin page
-// reads/writes this, and the storefront (home + /collection) reads it via
-// localStorage. The default seed below is what the admin starts with.
+// Admin-managed catalog. Source of truth is MongoDB Atlas (via `/api/products`,
+// a single shared/global collection — products are not per-user). localStorage
+// is an instant, offline-friendly cache. The admin panel writes the catalog;
+// the storefront (home + /collection) reads it.
 
-export const ADMIN_PRODUCTS_KEY = 'shri:admin:products'
+import { auth } from './firebase'
+import { ADMIN_PRODUCTS_KEY, adminProductsSeed, type AdminProduct } from './catalog-data'
 
-export interface AdminProduct {
-  id: number
-  name: string
-  category: string
-  price: string // "₹299"
-  stock: number
-  status: string
-  sales: number
-  rating: number
-  image?: string
+export { ADMIN_PRODUCTS_KEY, adminProductsSeed, type AdminProduct }
+
+function cacheCatalog(list: AdminProduct[]): void {
+  try { localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(list)) } catch { /* ignore */ }
 }
 
-export const adminProductsSeed: AdminProduct[] = [
-  { id: 1, name: 'Javathu', category: 'Floral', price: '₹299', stock: 200, status: 'Active', sales: 187, rating: 4.8 },
-  { id: 2, name: 'Jasmine', category: 'Floral', price: '₹249', stock: 250, status: 'Active', sales: 256, rating: 4.9 },
-  { id: 3, name: 'Champa', category: 'Floral', price: '₹279', stock: 180, status: 'Active', sales: 198, rating: 4.7 },
-  { id: 4, name: 'Lavender', category: 'Herbal', price: '₹269', stock: 160, status: 'Active', sales: 142, rating: 4.6 },
-  { id: 5, name: 'Screw Pine', category: 'Floral', price: '₹319', stock: 120, status: 'Active', sales: 124, rating: 4.5 },
-  { id: 6, name: 'Rose', category: 'Floral', price: '₹259', stock: 220, status: 'Active', sales: 213, rating: 4.8 },
-  { id: 7, name: 'Sandal', category: 'Premium', price: '₹399', stock: 140, status: 'Active', sales: 287, rating: 4.9 },
-  { id: 8, name: 'Sacred Resin', category: 'Premium', price: '₹499', stock: 90, status: 'Active', sales: 156, rating: 4.9 },
-]
-
-// Returns the admin catalog from localStorage, falling back to the seed
-// the first time the app is opened in this browser.
+// Synchronous cache reader (instant render). Falls back to the seed so the
+// storefront always has something to show before the server responds.
 export function loadAdminCatalog(): AdminProduct[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === 'undefined') return adminProductsSeed
   try {
     const raw = localStorage.getItem(ADMIN_PRODUCTS_KEY)
     if (raw) {
@@ -38,9 +23,46 @@ export function loadAdminCatalog(): AdminProduct[] {
       if (Array.isArray(parsed)) return parsed
     }
   } catch { /* ignore */ }
-  // Seed on first visit so storefront has products to display.
-  try {
-    localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(adminProductsSeed))
-  } catch { /* ignore */ }
   return adminProductsSeed
+}
+
+/**
+ * Fetch the catalog from the server and refresh the cache. Falls back to the
+ * cache (or seed) if the request fails.
+ */
+export async function fetchCatalog(): Promise<AdminProduct[]> {
+  try {
+    const res = await fetch('/api/products')
+    const data = await res.json()
+    if (!data.ok) return loadAdminCatalog()
+    const products = (data.products ?? []) as AdminProduct[]
+    cacheCatalog(products)
+    return products
+  } catch {
+    return loadAdminCatalog()
+  }
+}
+
+// Push the catalog to the server in the background (admin email is sent so the
+// route can authorize the write).
+async function pushCatalogToCloud(list: AdminProduct[]): Promise<void> {
+  try {
+    const email = auth.currentUser?.email?.toLowerCase() || ''
+    await fetch('/api/products', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products: list, email }),
+    })
+  } catch {
+    /* offline — cache still holds it */
+  }
+}
+
+/**
+ * Persist the catalog (admin). Writes the cache synchronously and pushes to the
+ * server in the background.
+ */
+export function saveCatalog(list: AdminProduct[]): void {
+  cacheCatalog(list)
+  void pushCatalogToCloud(list)
 }

@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { addToStoredCart, type CartLine } from '@/lib/cart'
-import { loadAdminCatalog } from '@/lib/catalog'
+import { loadAdminCatalog, fetchCatalog } from '@/lib/catalog'
 import { fetchWishlist, toggleWishlist as toggleWishlistBackend } from '@/lib/wishlist'
 
 interface CollectionProduct {
@@ -94,6 +94,9 @@ export default function CollectionPage() {
   useEffect(() => {
     setAdminProducts(loadAdminProducts())
     setHydrated(true)
+    let active = true
+    void fetchCatalog().then(() => { if (active) setAdminProducts(loadAdminProducts()) })
+    return () => { active = false }
   }, [])
 
   // Wishlist ids loaded from the backend (Firestore, cached locally).

@@ -28,7 +28,7 @@ import {
   BarChart2, PieChart, Activity, TrendingUp as TrendIcon,
   UserPlus, Shield, Lock, BellRing, Globe, Palette,
 } from "lucide-react";
-import { adminProductsSeed as productsList, ADMIN_PRODUCTS_KEY } from "@/lib/catalog";
+import { adminProductsSeed as productsList, fetchCatalog, saveCatalog } from "@/lib/catalog";
 
 // ── Color Palette ──────────────────────────────────────
 const colors = {
@@ -399,10 +399,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    try {
-      const p = localStorage.getItem(ADMIN_PRODUCTS_KEY);
-      if (p) setProducts(JSON.parse(p));
-    } catch {}
+    void fetchCatalog().then(list => setProducts(list as AdminProduct[]));
     refreshOrders();
     refreshCustomers();
     const onStorage = () => { refreshOrders(); refreshCustomers(); };
@@ -412,7 +409,7 @@ export default function AdminDashboard() {
 
   const persistProducts = useCallback((list: AdminProduct[]) => {
     setProducts(list);
-    try { localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(list)); } catch {}
+    saveCatalog(list);
   }, []);
 
   const handleDeleteProduct = useCallback((id: number) => {

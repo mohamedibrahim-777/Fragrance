@@ -26,7 +26,7 @@ import { loadCart, saveCart, fetchCart, type CartLine } from '@/lib/cart'
 import { addOrder } from '@/lib/orders'
 import { fetchWishlist, toggleWishlist as toggleWishlistBackend, type WishEntry } from '@/lib/wishlist'
 import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from '@/lib/auth'
-import { loadAdminCatalog } from '@/lib/catalog'
+import { loadAdminCatalog, fetchCatalog } from '@/lib/catalog'
 import { LogOut, LogIn } from 'lucide-react'
 
 // ====== TYPES ======
@@ -356,6 +356,7 @@ export default function Home() {
   useEffect(() => {
     const refresh = () => setProducts(loadAdminProducts())
     refresh()
+    void fetchCatalog().then(() => refresh()) // pull catalog from the backend
     window.addEventListener('storage', refresh)
     return () => window.removeEventListener('storage', refresh)
   }, [])
