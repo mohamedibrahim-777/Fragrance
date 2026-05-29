@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { loadCart, saveCart, type CartLine } from '@/lib/cart'
+import { loadCart, saveCart, fetchCart, type CartLine } from '@/lib/cart'
 import { addOrder } from '@/lib/orders'
 import { getSession, subscribeAuth, type Session } from '@/lib/auth'
 
@@ -38,9 +38,12 @@ export default function CheckoutPage() {
   useEffect(() => {
     setItems(loadCart())
     setHydrated(true)
+    let active = true
+    fetchCart().then(items => { if (active) setItems(items) })
     const refresh = () => setSession(getSession())
     refresh()
-    return subscribeAuth(refresh)
+    const unsub = subscribeAuth(refresh)
+    return () => { active = false; unsub() }
   }, [])
 
   const [form, setForm] = useState({

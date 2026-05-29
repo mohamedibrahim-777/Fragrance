@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
-import { loadCart, saveCart, type CartLine } from '@/lib/cart'
+import { loadCart, saveCart, fetchCart, type CartLine } from '@/lib/cart'
 import { addOrder } from '@/lib/orders'
 import { fetchWishlist, toggleWishlist as toggleWishlistBackend, type WishEntry } from '@/lib/wishlist'
 import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from '@/lib/auth'
@@ -324,10 +324,19 @@ export default function Home() {
     return () => { active = false; unsub() }
   }, [])
 
-  // Load the shared cart from localStorage on mount, then keep it in sync.
+  // Load the shared cart: instant from the local cache, then reconciled with
+  // the backend (and re-synced whenever the auth session changes).
   useEffect(() => {
     setCart(loadCart() as CartItem[])
     cartHydrated.current = true
+    let active = true
+    const sync = async () => {
+      const items = await fetchCart()
+      if (active) setCart(items as CartItem[])
+    }
+    void sync()
+    const unsub = subscribeAuth(() => { void sync() })
+    return () => { active = false; unsub() }
   }, [])
 
   useEffect(() => {

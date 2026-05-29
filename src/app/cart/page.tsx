@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { loadCart, saveCart, addLine, type CartLine } from '@/lib/cart'
+import { loadCart, saveCart, addLine, fetchCart, type CartLine } from '@/lib/cart'
 
 export default function CartPage() {
   const router = useRouter()
@@ -25,6 +25,9 @@ export default function CartPage() {
   useEffect(() => {
     setItems(loadCart())
     setHydrated(true)
+    let active = true
+    fetchCart().then(items => { if (active) setItems(items) })
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
