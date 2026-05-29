@@ -1,16 +1,13 @@
 // Wishlist backend.
 //
-// Same model as orders.ts: Firestore is the source of truth for a signed-in
-// user (one doc per user at `wishlists/{uid}` holding the full item list),
-// with localStorage as an instant, offline-friendly cache. Guests get a
-// local-only wishlist that is migrated up to the cloud the first time they
-// sign in.
+// Same model as orders.ts: MongoDB Atlas (via the `/api/wishlist` route) is
+// the source of truth for a signed-in user, with localStorage as an instant,
+// offline-friendly cache. Guests get a local-only wishlist that is migrated up
+// to the server the first time they sign in.
 
-import { auth, db } from './firebase'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { auth } from './firebase'
 
 export const WISHLIST_KEY = 'shri:wishlist'
-const WISHLIST_COLLECTION = 'wishlists'
 
 export interface WishEntry {
   id: number
@@ -42,49 +39,51 @@ export function saveWishlist(items: WishEntry[]): void {
   }
 }
 
-// Strip `undefined` — Firestore rejects it.
-function clean<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value))
-}
-
-// ---- Firestore (cloud) ----
+// ---- server (MongoDB via /api/wishlist) ----
 
 async function persistToCloud(items: WishEntry[]): Promise<void> {
   try {
     const user = auth.currentUser
     if (!user) return
-    await setDoc(doc(db, WISHLIST_COLLECTION, user.uid), { items: clean(items) })
+    await fetch('/api/wishlist', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid, items }),
+    })
   } catch {
-    /* offline / rules — cache still holds it */
+    /* offline — cache still holds it */
   }
 }
 
 /**
- * Load the signed-in user's wishlist from Firestore and refresh the cache.
- * For a brand-new cloud doc, any local (guest) wishlist is migrated up.
+ * Load the signed-in user's wishlist from the server and refresh the cache.
+ * If the server is empty but the guest had local items, those are migrated up.
  * Falls back to the cache if there is no user or the request fails.
  */
 export async function fetchWishlist(): Promise<WishEntry[]> {
   const user = auth.currentUser
   if (!user) return loadWishlist()
   try {
-    const ref = doc(db, WISHLIST_COLLECTION, user.uid)
-    const snap = await getDoc(ref)
-    if (snap.exists()) {
-      const items = (snap.data().items ?? []) as WishEntry[]
-      saveWishlist(items)
-      return items
+    const res = await fetch(`/api/wishlist?uid=${encodeURIComponent(user.uid)}`)
+    const data = await res.json()
+    if (!data.ok) return loadWishlist()
+    const items = (data.items ?? []) as WishEntry[]
+    if (items.length === 0) {
+      // First sign-in: seed the server from whatever the guest had locally.
+      const local = loadWishlist()
+      if (local.length) {
+        await persistToCloud(local)
+        return local
+      }
     }
-    // First sign-in: seed the cloud from whatever the guest had locally.
-    const local = loadWishlist()
-    if (local.length) await setDoc(ref, { items: clean(local) })
-    return local
+    saveWishlist(items)
+    return items
   } catch {
     return loadWishlist()
   }
 }
 
-// ---- mutations (cache now, cloud in background) ----
+// ---- mutations (cache now, server in background) ----
 
 /** Toggle an item by id. Returns the new full list. */
 export function toggleWishlist(entry: WishEntry): WishEntry[] {
