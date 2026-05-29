@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { addToStoredCart, CART_KEY, type CartLine } from '@/lib/cart'
-import { loadOrders, ORDERS_KEY, cancelStoredOrder } from '@/lib/orders'
+import { fetchMyOrders, ORDERS_KEY, cancelStoredOrder } from '@/lib/orders'
+import { fetchWishlist, removeFromWishlist } from '@/lib/wishlist'
 import { XCircle } from 'lucide-react'
 
 // ====== TYPES ======
@@ -134,14 +135,6 @@ const orders: Order[] = [
   },
 ]
 
-const initialWishlist: WishlistItem[] = [
-  { id: 1, name: 'Chandanam Sandalwood', price: 349, originalPrice: 499, image: '/images/product1.png', inStock: true },
-  { id: 2, name: 'Malligai Jasmine', price: 249, originalPrice: 399, image: '/images/product2.png', inStock: true },
-  { id: 3, name: 'Nag Champa Classic', price: 299, originalPrice: 449, image: '/images/product3.png', inStock: true },
-  { id: 4, name: 'Roja Camphor Blend', price: 279, originalPrice: 399, image: '/images/product4.png', inStock: true },
-  { id: 5, name: 'Sambrani Herbal', price: 399, originalPrice: 549, image: '/images/product5.png', inStock: true },
-  { id: 6, name: 'Khus Vetiver Classic', price: 269, originalPrice: 399, image: '/images/product6.png', inStock: false },
-]
 
 const initialAddresses: Address[] = [
   { id: 1, label: 'Home', name: 'Priya Sharma', line1: '42, Sri Venkateswara Street', line2: 'T. Nagar, Chennai', pincode: '600017', phone: '+91 98765 43210', isDefault: true },
@@ -247,8 +240,27 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState('orders')
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
-  // Wishlist state
-  const [wishlist, setWishlist] = useState<WishlistItem[]>(initialWishlist)
+  // Wishlist state — loaded from the backend (Firestore, cached locally) and
+  // re-fetched when the auth session changes so it syncs across devices.
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([])
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      const items = await fetchWishlist()
+      if (!active) return
+      setWishlist(items.map(i => ({
+        id: i.id,
+        name: i.name,
+        price: i.price,
+        originalPrice: i.originalPrice,
+        image: i.image,
+        inStock: i.inStock ?? true,
+      })))
+    }
+    void load()
+    const unsub = subscribeAuth(() => { void load() })
+    return () => { active = false; unsub() }
+  }, [])
 
   // Address state
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses)
@@ -298,25 +310,35 @@ export default function UserDashboard() {
   // Cancel order state
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
 
-  // Orders placed via checkout (localStorage), shown above the mock history.
+  // Real orders from the backend (Firestore, cached in localStorage), shown
+  // above the mock history. Re-fetched whenever the auth session changes so a
+  // user's orders sync in once Firebase restores their session.
   const [storedOrders, setStoredOrders] = useState<Order[]>([])
   useEffect(() => {
-    setStoredOrders(
-      loadOrders().map(o => ({
-        id: o.id,
-        date: o.date,
-        status: o.status as Order['status'],
-        total: o.total,
-        items: o.items.map(i => ({
-          name: i.name,
-          qty: i.quantity,
-          price: i.price,
-          image: i.image,
+    let active = true
+    const load = async () => {
+      const orders = await fetchMyOrders()
+      if (!active) return
+      setStoredOrders(
+        orders.map(o => ({
+          id: o.id,
+          date: o.date,
+          status: o.status as Order['status'],
+          total: o.total,
+          items: o.items.map(i => ({
+            name: i.name,
+            qty: i.quantity,
+            price: i.price,
+            image: i.image,
+          })),
+          customer: o.customer,
+          shipment: o.shipment,
         })),
-        customer: o.customer,
-        shipment: o.shipment,
-      })),
-    )
+      )
+    }
+    void load()
+    const unsub = subscribeAuth(() => { void load() })
+    return () => { active = false; unsub() }
   }, [])
 
   const [cancelledMockIds, setCancelledMockIds] = useState<Set<string>>(new Set())
@@ -334,6 +356,7 @@ export default function UserDashboard() {
 
   const handleRemoveFromWishlist = useCallback((id: number) => {
     const item = wishlist.find(w => w.id === id)
+    removeFromWishlist(id)
     setWishlist(prev => prev.filter(w => w.id !== id))
     toast({ title: 'Removed from Wishlist', description: `${item?.name || 'Item'} removed from your wishlist.` })
   }, [wishlist, toast])
@@ -341,6 +364,7 @@ export default function UserDashboard() {
   const handleMoveToCart = useCallback((item: WishlistItem) => {
     if (!item.inStock) return
     addToStoredCart([{ id: item.id, name: item.name, price: item.price, image: item.image, quantity: 1 }])
+    removeFromWishlist(item.id)
     setWishlist(prev => prev.filter(w => w.id !== item.id))
     toast({ title: 'Added to Cart!', description: `${item.name} has been moved to your cart.` })
   }, [toast])

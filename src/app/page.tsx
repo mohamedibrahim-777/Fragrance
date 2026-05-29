@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { loadCart, saveCart, type CartLine } from '@/lib/cart'
 import { addOrder } from '@/lib/orders'
+import { fetchWishlist, toggleWishlist as toggleWishlistBackend, type WishEntry } from '@/lib/wishlist'
 import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session } from '@/lib/auth'
 import { loadAdminCatalog } from '@/lib/catalog'
 import { LogOut, LogIn } from 'lucide-react'
@@ -310,6 +311,19 @@ export default function Home() {
   const cartHydrated = useRef(false)
   const [wishlist, setWishlist] = useState<number[]>([])
 
+  // Wishlist is backed by Firestore (cached locally); we keep just the ids in
+  // state for fast "is this wished?" checks. Re-fetched on auth change.
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      const items = await fetchWishlist()
+      if (active) setWishlist(items.map(i => i.id))
+    }
+    void load()
+    const unsub = subscribeAuth(() => { void load() })
+    return () => { active = false; unsub() }
+  }, [])
+
   // Load the shared cart from localStorage on mount, then keep it in sync.
   useEffect(() => {
     setCart(loadCart() as CartItem[])
@@ -445,8 +459,9 @@ export default function Home() {
     setCart(prev => prev.filter(item => item.id !== id))
   }, [])
 
-  const toggleWishlist = useCallback((id: number) => {
-    setWishlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  const toggleWishlist = useCallback((p: WishEntry) => {
+    const next = toggleWishlistBackend(p)
+    setWishlist(next.map(i => i.id))
   }, [])
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -834,7 +849,7 @@ export default function Home() {
                         <div className="absolute bottom-3 right-3 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                           <Button size="icon" variant="secondary"
                             className="h-9 w-9 rounded-full bg-white/95 shadow-md hover:bg-white"
-                            onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id) }}
+                            onClick={(e) => { e.stopPropagation(); toggleWishlist({ id: product.id, name: product.name, price: product.price, originalPrice: product.originalPrice, image: product.image }) }}
                             aria-label="Wishlist">
                             <Heart className={`w-4 h-4 ${isWished ? 'fill-red-500 text-red-500' : ''}`} />
                           </Button>

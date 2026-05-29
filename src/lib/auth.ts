@@ -120,6 +120,25 @@ export async function login(email: string, password: string): Promise<AuthResult
     return { ok: true, session }
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code
+    // Demo convenience: if account doesn't exist, auto-create it on first login.
+    if (code === 'auth/invalid-credential' || code === 'auth/user-not-found') {
+      if (password.length >= 6) {
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, e, password)
+          const session = toSession(cred.user, e.split('@')[0])
+          cachedSession = session
+          persistSession(session)
+          notify()
+          return { ok: true, session }
+        } catch (signupErr: unknown) {
+          const signupCode = (signupErr as { code?: string })?.code
+          if (signupCode === 'auth/email-already-in-use') {
+            return { ok: false, error: 'Wrong password for this email.' }
+          }
+          return { ok: false, error: prettyError(signupCode) }
+        }
+      }
+    }
     return { ok: false, error: prettyError(code) }
   }
 }
@@ -232,10 +251,12 @@ export function subscribeAuth(listener: () => void): () => void {
 
 function prettyError(code?: string): string {
   switch (code) {
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
     case 'auth/user-not-found':
-      return 'Incorrect email or password.'
+      return 'No account found. Please sign up first at /signup.'
+    case 'auth/invalid-credential':
+      return 'Invalid credentials. If you have no account yet, sign up at /signup.'
+    case 'auth/wrong-password':
+      return 'Wrong password.'
     case 'auth/email-already-in-use':
       return 'An account with this email already exists.'
     case 'auth/invalid-email':
@@ -247,6 +268,6 @@ function prettyError(code?: string): string {
     case 'auth/network-request-failed':
       return 'Network error. Check your connection.'
     default:
-      return 'Authentication failed. Please try again.'
+      return code ? `Authentication failed (${code}).` : 'Authentication failed. Please try again.'
   }
 }

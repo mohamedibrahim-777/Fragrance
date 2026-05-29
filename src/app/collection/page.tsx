@@ -21,6 +21,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { addToStoredCart, type CartLine } from '@/lib/cart'
 import { loadAdminCatalog } from '@/lib/catalog'
+import { fetchWishlist, toggleWishlist as toggleWishlistBackend } from '@/lib/wishlist'
 
 interface CollectionProduct {
   id: number
@@ -95,6 +96,15 @@ export default function CollectionPage() {
     setHydrated(true)
   }, [])
 
+  // Wishlist ids loaded from the backend (Firestore, cached locally).
+  useEffect(() => {
+    let active = true
+    void fetchWishlist().then((items) => {
+      if (active) setWishlist(items.map((i) => i.id))
+    })
+    return () => { active = false }
+  }, [])
+
   const allProducts = useMemo<CollectionProduct[]>(
     () => adminProducts,
     [adminProducts],
@@ -140,8 +150,15 @@ export default function CollectionPage() {
     toast({ title: 'Added to cart', description: `${p.name} added.` })
   }, [toast])
 
-  const toggleWishlist = useCallback((id: number) => {
-    setWishlist((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id])
+  const toggleWishlist = useCallback((p: CollectionProduct) => {
+    const next = toggleWishlistBackend({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      originalPrice: p.originalPrice ?? p.price,
+      image: p.image || '',
+    })
+    setWishlist(next.map((i) => i.id))
   }, [])
 
   return (
@@ -326,7 +343,7 @@ export default function CollectionPage() {
                         size="icon"
                         variant="secondary"
                         className="h-9 w-9 rounded-full bg-white/95 shadow-md hover:bg-white"
-                        onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id) }}
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(p) }}
                         aria-label="Wishlist"
                       >
                         <Heart className={`w-4 h-4 ${isWished ? 'fill-red-500 text-red-500' : ''}`} />
@@ -452,7 +469,7 @@ export default function CollectionPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => toggleWishlist(quickView.id)}
+                    onClick={() => toggleWishlist(quickView)}
                     className="border-temple-gold/25 h-11"
                   >
                     <Heart className={`w-4 h-4 ${wishlist.includes(quickView.id) ? 'fill-red-500 text-red-500' : ''}`} />

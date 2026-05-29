@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { ensureAdminSeed, getSession, logout as authLogout, subscribeAuth, type Session, type StoredUser, USERS_KEY } from "@/lib/auth";
-import { loadOrders, saveOrders, type StoredOrder } from "@/lib/orders";
+import { fetchAllOrders, setOrderStatus, type StoredOrder } from "@/lib/orders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -386,7 +386,7 @@ export default function AdminDashboard() {
   const [orderDetail, setOrderDetail] = useState<StoredOrder | null>(null);
 
   const refreshOrders = useCallback(() => {
-    setAdminOrders(loadOrders());
+    void fetchAllOrders().then(setAdminOrders);
   }, []);
 
   const refreshCustomers = useCallback(() => {
@@ -475,9 +475,8 @@ export default function AdminDashboard() {
   }, [productDraft, editingProduct, products, persistProducts, toast]);
 
   const updateOrderStatus = useCallback((id: string, status: string) => {
-    const next = loadOrders().map(o => o.id === id ? { ...o, status } : o);
-    saveOrders(next);
-    setAdminOrders(next);
+    setOrderStatus(id, status);
+    setAdminOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
     toast({ title: `Order ${id} → ${status}` });
   }, [toast]);
 
